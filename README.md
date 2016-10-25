@@ -14,3 +14,6 @@ First created the API as a result of me playing around with HTTP requests/respon
 To sum up, this program will try and find ALL the posts that fit your given criteria and attempt to download all of the original images/GIFs/Webms/MP4s into the specified directory.
 
 Regardless or what kind of error the website returns - such as "Too many requests" or "Bad gateway" - this program will wait and keep retrying until it finishes it's job.
+
+Example of the program handling website errors:
+![alt image2](https://puu.sh/rVn0F/db7f630ce4.png)
