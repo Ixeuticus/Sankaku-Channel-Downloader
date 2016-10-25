@@ -15,6 +15,6 @@ To sum up, this program will try and find ALL the posts that fit your given crit
 
 Regardless or what kind of error the website returns - such as "Too many requests" or "Bad gateway" - this program will wait and keep retrying until it finishes it's job.
 
-Example of the program handling website errors:
+### Example of the program handling website errors:
 
 ![alt image2](https://puu.sh/rVn0F/db7f630ce4.png)
