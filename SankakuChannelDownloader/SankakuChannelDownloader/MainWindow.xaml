@@ -1,0 +1,40 @@
+﻿<Window x:Class="SankakuChannelDownloader.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SankakuChannelDownloader"
+        mc:Ignorable="d"
+        Title="Sankaku Channel Downloader" MinHeight="500" MinWidth="470" Height="500" Width="470" WindowStartupLocation="Manual" Icon="iconPNG.png" Closing="Window_Closing">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="271*"/>
+            <ColumnDefinition Width="191*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="txtLoggedIn" Margin="10,10,10,0" TextWrapping="Wrap" Text="Logged in as" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="txtTags" Height="23" Margin="10,71,6.333,0" VerticalAlignment="Top" TabIndex="1" MaxLength="200"/>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,50,0,0" TextWrapping="Wrap" Text="Tags:" VerticalAlignment="Top"/>
+        <Button x:Name="btnStartDownload" Content="Start Downloading" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="143" Height="30" IsDefault="True" Click="btnStartDownload_Click" Grid.Column="1"/>
+        <TextBox x:Name="txtImageCount" HorizontalAlignment="Left" Height="23" Margin="10,127,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="72" TabIndex="3" MaxLength="5" GotFocus="txtImageCount_GotFocus"/>
+        <TextBlock x:Name="textBlock_Copy" HorizontalAlignment="Left" Margin="10,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="204" Text="How many images to download?"/>
+        <TextBlock x:Name="textBlock_Copy1" HorizontalAlignment="Left" Margin="87,128,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="92" Text="Type 0 for ALL" Foreground="#FFB4B4B4"/>
+        <TextBlock x:Name="textBlock_Copy2" HorizontalAlignment="Left" Margin="10,213,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="204" Text="Where to download?"/>
+        <TextBlock x:Name="txtPath" Margin="10,229,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Click here to select a destination" Foreground="#FF616161" MouseDown="txtPath_MouseDown" Grid.ColumnSpan="2"/>
+        <ListBox x:Name="listBox" DisplayMemberPath="Message" Margin="10,252,10,56" MouseDoubleClick="listBox_MouseDoubleClick" Grid.ColumnSpan="2"/>
+        <TextBlock x:Name="txtETA" Margin="10,0,164,35" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="Remaining (ETA):" Grid.ColumnSpan="2"/>
+        <CheckBox x:Name="checkboxFilterVideos" Content="Don't download video files&#xA;" HorizontalAlignment="Left" Margin="6,99,0,0" VerticalAlignment="Top" Height="16" IsTabStop="False" Grid.Column="1"/>
+        <TextBox x:Name="txtBlacklist" Height="23" Margin="5.667,71,10,0" VerticalAlignment="Top" TabIndex="2" MaxLength="200" Grid.Column="1"/>
+        <TextBlock x:Name="textBlock_Copy3" HorizontalAlignment="Left" Margin="5.667,53,0,0" TextWrapping="Wrap" Text="Blacklisted tags:" VerticalAlignment="Top" Width="85" Grid.Column="1"/>
+        <TextBox x:Name="txtSizeLimit" Height="24" Margin="10,175,0,0" MaxLength="3" TextWrapping="Wrap" VerticalAlignment="Top" SpellCheck.IsEnabled="True" TabIndex="4" HorizontalAlignment="Left" Width="72" Text="0" GotFocus="txtImageCount_GotFocus"/>
+        <TextBlock x:Name="textBlock_Copy4" HorizontalAlignment="Left" Margin="10,156,0,0" TextWrapping="Wrap" Text="Size limit for one file: (in MB)" VerticalAlignment="Top" Width="224"/>
+        <TextBlock x:Name="textBlock_Copy5" HorizontalAlignment="Left" Margin="87,179,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="113" Foreground="#FFB4B4B4"><Run Text="Type 0 for "/><Run Text="NO LIMIT"/></TextBlock>
+        <TextBlock x:Name="txtETA_Copy" Margin="10,0,0,10" TextWrapping="Wrap" VerticalAlignment="Bottom" Foreground="#FFB4B4B4" HorizontalAlignment="Left" Width="288" Grid.ColumnSpan="2" Text="Try double clicking on some logs."/>
+        <CheckBox x:Name="checkBoxSkip" Content="Skip existing files" HorizontalAlignment="Left" Margin="6,120,0,0" VerticalAlignment="Top" Height="16" IsTabStop="False" Grid.Column="1"/>
+        <TextBox x:Name="txtStartingPage" Height="24" Margin="6,181,0,0" MaxLength="3" TextWrapping="Wrap" VerticalAlignment="Top" SpellCheck.IsEnabled="True" TabIndex="5" HorizontalAlignment="Left" Width="77" Text="1" GotFocus="txtImageCount_GotFocus" Grid.Column="1"/>
+        <TextBlock x:Name="textBlock_Copy6" HorizontalAlignment="Left" Margin="6,162,0,0" TextWrapping="Wrap" Text="Starting page:" VerticalAlignment="Top" Width="102" Grid.Column="1"/>
+        <TextBox x:Name="txtPageLimit" Height="24" Margin="108,181,0,0" MaxLength="2" TextWrapping="Wrap" VerticalAlignment="Top" SpellCheck.IsEnabled="True" TabIndex="6" HorizontalAlignment="Left" Width="67" Text="20" GotFocus="txtImageCount_GotFocus" Grid.Column="1"/>
+        <TextBlock x:Name="textBlock_Copy7" HorizontalAlignment="Left" Margin="108,162,-19,0" TextWrapping="Wrap" Text="Posts / Page:" VerticalAlignment="Top" Width="102" Grid.Column="1"/>
+        <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Margin="108,205,0,0" TextWrapping="Wrap" Text="Default is 20" VerticalAlignment="Top" Foreground="#FF9E9E9E"/>
+
+    </Grid>
+</Window>
