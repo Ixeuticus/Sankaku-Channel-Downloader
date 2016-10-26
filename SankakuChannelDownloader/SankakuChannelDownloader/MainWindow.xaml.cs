@@ -25,6 +25,7 @@ namespace SankakuChannelDownloader
     public partial class MainWindow : Window
     {
         public const string SavePath = "save.data";
+        public const string CachePath = "cache.data";
         public static SankakuChannelUser User;
         public static bool CancelRequested = false;
 
@@ -77,6 +78,7 @@ namespace SankakuChannelDownloader
                 txtImageCount.Text = sv.ImageLimit;
                 txtPath.Text = sv.FilePath;
                 txtPageLimit.Text = (sv.PageLimit.Length == 0 || sv.PageLimit == "0") ? "20" : sv.PageLimit;
+                checkBoxSkip.IsChecked = sv.SkipExisting;
                 this.WindowState = sv.IsFullscreen ? WindowState.Maximized : WindowState.Normal;
             }
             catch (Exception ex)
@@ -412,19 +414,32 @@ namespace SankakuChannelDownloader
                         return;
                     }
 
-                    // Check for existing images
+                    // Check if exists using the cache
                     if (skipExisting)
-                        if (ImageExists(a.PostID, files, out string filename))
+                    {
+                        if (ImageExists(a.PostID, path, out string foundFilename))
                         {
                             double procentage = ((double)(foundPosts.IndexOf(a) + 1) / (double)foundPosts.Count) * 100;
 
-                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{filename}\"", true, filename);
+                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{foundFilename}\"", false, foundFilename);
                             stats.PostsDownloaded++;
                             continue;
                         }
+                    }
 
                     // Download actual image
                     var imageLink = a.GetFullImageLink();
+
+                    // var extension = new Regex(@".*?\.([jpg,gif,png,jpeg,webm,mp4,bmp]*?)\?", RegexOptions.IgnoreCase).Match(imageLink).Groups[1].Value;
+                    //string filename = $"{path}\\{a.PostID}.{extension}";
+
+                    var filen = new Regex(@"\/data.*?\/([^\/]*?)\?", RegexOptions.Singleline).Match(imageLink).Groups[1].Value;                   
+                    string filename = $"{path}\\{filen}";
+                    if (WriteToCache(a.PostID, filen, out string ErrorMsg) == false)
+                    {
+                        WriteToLog($"Failed to write to cache.", isError: true, exMessage: ErrorMsg);
+                    }
+
                     var data = a.DownloadFullImage(imageLink, out bool wasRedirected, containVideos, sizeLimit);
 
                     // Check if response was redirected
@@ -436,10 +451,7 @@ namespace SankakuChannelDownloader
                             WriteToLog($"The post '{a.PostID}' was skipped because of given conditions.");
                             continue;
                         }
-
-                        // Determine which extension to use
-                        var extension = new Regex(@".*?\.([jpg,gif,png,jpeg,webm,mp4,bmp]*?)\?", RegexOptions.IgnoreCase).Match(imageLink).Groups[1].Value;
-                        string filename = $"{path}\\{a.PostID}.{extension}";  // <-- generate filename
+                        
                         File.WriteAllBytes(filename, data);
 
                         // Display progress
@@ -562,19 +574,65 @@ namespace SankakuChannelDownloader
             FinishedWork?.Invoke(null, stats);
         }
 
-        private bool ImageExists(int postID, string[] files, out string filename)
+        private bool ImageExists(int postID, string path, out string filename)
         {
-            foreach(var s in files)
+            filename = "";
+            var fln = CheckCacheForFilename(postID);
+            if (fln != null)
             {
-                if (s.ToLower().Contains(postID.ToString()))
+                var fpath = path + "\\" + fln;
+                if (File.Exists(fpath))
                 {
-                    filename = s;
+                    filename = fpath;
                     return true;
                 }
+                else return false;
             }
-
-            filename = "";
             return false;
+        }
+
+        public bool WriteToCache(int postID, string filename, out string err)
+        {
+            err = "";
+            if (CheckCacheForFilename(postID) != null) return true;
+
+            try
+            {
+                File.AppendAllLines(CachePath, new string[] { $"{postID}:{filename}" });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                err = ex.Message;
+                return false;
+            }
+        }
+        public string CheckCacheForFilename(int postID)
+        {
+            if (File.Exists(CachePath) == false) return null;
+
+            using (FileStream fs = File.Open(CachePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (BufferedStream bs = new BufferedStream(fs))
+            using (StreamReader sr = new StreamReader(bs))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    try
+                    {
+                        var firstIndex = line.IndexOf(':');
+                        var stringPostID = line.Substring(0, firstIndex);
+                        var stringFilename = line.Substring(firstIndex + 1, line.Length - (firstIndex + 1));
+                        int id;
+
+                        if (int.TryParse(stringPostID, out id) == false) continue;
+                        if (id == postID) return stringFilename;
+                    }
+                    catch { continue; }
+                }
+
+                return null;
+            }
         }
 
         private void txtImageCount_GotFocus(Object sender, RoutedEventArgs e) => ((TextBox)sender).SelectAll();
@@ -629,6 +687,7 @@ namespace SankakuChannelDownloader
                     Height = this.Height,
                     IsFullscreen = this.WindowState == WindowState.Maximized,
                     PageLimit = txtPageLimit.Text,
+                    SkipExisting = checkBoxSkip.IsChecked == true
                 }.GetBytes());
             }
             catch(Exception ex)
@@ -670,7 +729,7 @@ namespace SankakuChannelDownloader
         public bool ContainVideo { get; set; }
         public string FilePath { get; set; }
         public string PageLimit { get; set; }
-
+        public bool SkipExisting { get; set; }
 
         public double Left { get; set; }
         public double Top { get; set; }
