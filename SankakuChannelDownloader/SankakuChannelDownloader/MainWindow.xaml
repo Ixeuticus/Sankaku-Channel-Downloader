@@ -20,7 +20,14 @@
         <TextBlock x:Name="textBlock_Copy1" HorizontalAlignment="Left" Margin="87,128,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="92" Text="Type 0 for ALL" Foreground="#FFB4B4B4"/>
         <TextBlock x:Name="textBlock_Copy2" HorizontalAlignment="Left" Margin="10,213,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="204" Text="Where to download?"/>
         <TextBlock x:Name="txtPath" Margin="10,229,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Click here to select a destination" Foreground="#FF616161" MouseDown="txtPath_MouseDown" Grid.ColumnSpan="2"/>
-        <ListBox x:Name="listBox" DisplayMemberPath="Message" Margin="10,252,10,56" MouseDoubleClick="listBox_MouseDoubleClick" Grid.ColumnSpan="2"/>
+        <ListBox x:Name="listBox" DisplayMemberPath="Message" Margin="10,252,10,56" MouseDoubleClick="listBox_MouseDoubleClick" Grid.ColumnSpan="2">
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open file" Name="openFile" Click="openFile_Click"></MenuItem>
+                    <MenuItem Header="Open containing folder" Name="openFolder" Click="openFolder_Click"></MenuItem>
+                </ContextMenu>
+            </ListBox.ContextMenu>
+        </ListBox>
         <TextBlock x:Name="txtETA" Margin="10,0,164,35" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="Remaining (ETA):" Grid.ColumnSpan="2"/>
         <CheckBox x:Name="checkboxFilterVideos" Content="Don't download video files&#xA;" HorizontalAlignment="Left" Margin="6,99,0,0" VerticalAlignment="Top" Height="16" IsTabStop="False" Grid.Column="1"/>
         <TextBox x:Name="txtBlacklist" Height="23" Margin="5.667,71,10,0" VerticalAlignment="Top" TabIndex="2" MaxLength="200" Grid.Column="1"/>

@@ -35,7 +35,7 @@ namespace SankakuChannelDownloader
         public MainWindow()
         {
             InitializeComponent();
-         
+
             // Opens up the LoginWindow (check "LoginWindow.xaml.cs" for more info)
             LoginWindow form = new LoginWindow();
             form.ShowDialog();
@@ -95,7 +95,7 @@ namespace SankakuChannelDownloader
                 if (e.WasCancelled == false) WriteToLog("Finished task.");
                 else WriteToLog("Task was cancelled.");
 
-                MessageBox.Show($"Download {(e.WasCancelled ? "was cancelled." : "finished.")}\n\n" +
+                MessageBox.Show(this, $"Download {(e.WasCancelled ? "was cancelled." : "finished.")}\n\n" +
                     $"A total of {e.PostsFound} posts was found and {e.PostsDownloaded} posts were downloaded.",
                     "Download info", MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -103,7 +103,7 @@ namespace SankakuChannelDownloader
                 btnStartDownload.Content = "Start Download";
 
                 CancelRequested = false;
-                btnStartDownload.IsEnabled = true;              
+                btnStartDownload.IsEnabled = true;
             });
         }
 
@@ -210,7 +210,7 @@ namespace SankakuChannelDownloader
                 btnStartDownload.Content = "Stop Download";
 
                 // Start the task - give it ALL the information it needs... now that's a lot of parameters... damn.
-                Task.Run(() => StartDownloading(tags, count, path, sizeLimit, blacklisted, containVideos, startingPage, pageLimit, skipExisting));             
+                Task.Run(() => StartDownloading(tags, count, path, sizeLimit, blacklisted, containVideos, startingPage, pageLimit, skipExisting));
             }
         }
 
@@ -227,7 +227,7 @@ namespace SankakuChannelDownloader
             txtStartingPage.IsEnabled = state;
         }
         public void WriteToLog(string msg, bool registerTime = false, string filename = "", bool isError = false, string exMessage = "", string[] fndPosts = null)
-        {           
+        {
             // Dispatcher needs to be called when interacting with the GUI - otherwise an error can be thrown
             Dispatcher.Invoke(() =>
             {
@@ -274,7 +274,7 @@ namespace SankakuChannelDownloader
         public event EventHandler<DownloadStats> FinishedWork;  // This event handler gets invoked when Task is either finished or cancelled
         public static int SecondsWaited = 0; // This is just a temporary variable that gets incremented when task needs to wait for something....
 
-        private void StartDownloading(string tags, int imageLimit, string path, double sizeLimit, string blacklistedTags, bool containVideos, int pageCount, 
+        private void StartDownloading(string tags, int imageLimit, string path, double sizeLimit, string blacklistedTags, bool containVideos, int pageCount,
             int limit, bool skipExisting = false)
         {
             DownloadStats stats = new DownloadStats();
@@ -377,9 +377,9 @@ namespace SankakuChannelDownloader
                     }
                     else WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
                     #endregion
-                } 
+                }
                 #endregion
-            }            
+            }
 
             // remove posts to fit the limit
             if (foundPosts.Count > imageLimit && imageLimit > 0)
@@ -394,7 +394,7 @@ namespace SankakuChannelDownloader
                 stats.PostsFound -= removed;
                 WriteToLog($"Removed {removed} found posts to fit the given limit.");
             }
-            
+
             WriteToLog($"Found all posts. ({foundPosts.Count} posts found in total)");
             WriteToLog("Downloading images...");
 
@@ -432,7 +432,7 @@ namespace SankakuChannelDownloader
 
                     var imageLinkShortened = imageLink.Substring(imageLink.LastIndexOf('/') + 1);
                     Match match = new Regex(@"(.*?)(\.[a-z,0-5]{0,5})", RegexOptions.Singleline).Match(imageLinkShortened);
-                    var filen = match.Groups[1].Value + match.Groups[2].Value;                
+                    var filen = match.Groups[1].Value + match.Groups[2].Value;
                     string filename = $"{path}\\{filen}";
                     if (WriteToCache(a.PostID, filen, out string ErrorMsg) == false)
                     {
@@ -450,7 +450,7 @@ namespace SankakuChannelDownloader
                             WriteToLog($"The post '{a.PostID}' was skipped because of given conditions.");
                             continue;
                         }
-                        
+
                         File.WriteAllBytes(filename, data);
 
                         // Display progress
@@ -464,7 +464,7 @@ namespace SankakuChannelDownloader
                     else
                     {
                         WriteToLog($"Server response was redirected!");
-                    } 
+                    }
                     #endregion
                 }
                 catch (WebException ex)
@@ -478,7 +478,7 @@ namespace SankakuChannelDownloader
 
                         if (SecondsWaited < 60) SecondsWaited += 15;
                         else if (SecondsWaited >= 60 && SecondsWaited < 60 * 15) SecondsWaited += 120;
-                            
+
                         WriteToLog($"Retrying in {SecondsWaited} seconds...");
                         Thread.Sleep(SecondsWaited * 1000);
                         goto download;
@@ -519,7 +519,7 @@ namespace SankakuChannelDownloader
                         }
 
                         WriteToLog("Internet connection restored. Continuing task...");
-                        goto download; 
+                        goto download;
                         #endregion
                     }
                     else if (ex.Message.ToLower().Contains("time") && ex.Message.ToLower().Contains("out"))
@@ -557,31 +557,22 @@ namespace SankakuChannelDownloader
                                 WriteToLog($"Failed to establish connection. Attempting again in {SecondsWaited} seconds...");
                                 Thread.Sleep(SecondsWaited * 1000);
                             }
-                        } 
+                        }
                         #endregion
                     }
                     else WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
                     #endregion
                 }
-                catch (UriFormatException ex)
+                catch (UriFormatException)
                 {
-                    if (SecondsWaited == 0) WriteToLog(ex.Message, isError: true, exMessage: ex.Message);
+                    // This exception gets thrown when a flash game is encountered on Sankaku and does not have a source link
 
-                    if (SecondsWaited < 100) SecondsWaited += 15;
-                    else if (SecondsWaited >= 100)
-                    {
-                        WriteToLog("Stopped retrying. This post was skipped.");
-                        SecondsWaited = 0;
-                        continue;
-                    }
-
-                    WriteToLog($"Retrying in {SecondsWaited} seconds...");
-                    Thread.Sleep(SecondsWaited * 1000);
-                    goto download;
+                    // <param name=movie value="//cs.sankakucomplex.com/data/f6/23/f623ea7559ef39d96ebb0ca7530586b8.swf?3378073">
+                    WriteToLog("Skipping invalid post.");
                 }
                 catch (Exception ex)
                 {
-                    WriteToLog("ERROR: " + ex.Message + $"({ex.GetType().ToString()})", isError: true, exMessage: ex.Message); 
+                    WriteToLog("ERROR: " + ex.Message + $"({ex.GetType().ToString()})", isError: true, exMessage: ex.Message);
                 }
             }
 
@@ -612,7 +603,7 @@ namespace SankakuChannelDownloader
             if (CheckCacheForFilename(postID) != null) return true;
 
             try
-            {              
+            {
                 File.AppendAllLines(CachePath, new string[] { $"{postID}:{filename}" });
                 return true;
             }
@@ -667,9 +658,9 @@ namespace SankakuChannelDownloader
             {
                 try
                 {
-                    Process.Start(log.DownloadedFilepath);  
+                    Process.Start(log.DownloadedFilepath);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
@@ -692,7 +683,8 @@ namespace SankakuChannelDownloader
             try
             {
                 // Save data when window closes
-                File.WriteAllBytes(SavePath, new Save() {
+                File.WriteAllBytes(SavePath, new Save()
+                {
                     Tags = txtTags.Text,
                     BlacklistedTags = txtBlacklist.Text,
                     ImageLimit = txtImageCount.Text,
@@ -707,68 +699,104 @@ namespace SankakuChannelDownloader
                     SkipExisting = checkBoxSkip.IsChecked == true
                 }.GetBytes());
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show("Failed to create a save file!\n\n" + ex.Message, "Save file error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-    }
 
-    // These below are serializable classes that can be converted into bytes and written to disc
-    [Serializable]
-    public class Log
-    {
-        public DateTime Timestamp { get; set; }
-        public string Message { get; set; }
-        public bool IsError { get; set; }
-        public string ErrorMessage { get; set; }
-        public string DownloadedFilepath { get; set; }
-        public string[] FoundPosts { get; set; }
-
-        public Log(string Message, DateTime timestamp, string filename = "", bool isError = false, string errMsg = "", string[] foundPosts = null)
+        private void openFolder_Click(Object sender, RoutedEventArgs e)
         {
-            this.Timestamp = timestamp;
-            this.Message = Message;
-            this.IsError = isError;
-            this.DownloadedFilepath = filename;
-            this.ErrorMessage = errMsg;
-            this.FoundPosts = foundPosts;
-        }
-    }
+            if (listBox.SelectedIndex == -1) return;
+            Log log = (Log)listBox.SelectedItem;
 
-    [Serializable]
-    public class Save
-    {
-        public string Tags { get; set; }
-        public string BlacklistedTags { get; set; }
-        public string ImageLimit { get; set; }
-        public string SizeLimit { get; set; }
-        public bool ContainVideo { get; set; }
-        public string FilePath { get; set; }
-        public string PageLimit { get; set; }
-        public bool SkipExisting { get; set; }
-
-        public double Left { get; set; }
-        public double Top { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public bool IsFullscreen { get; set; }
-
-        public byte[] GetBytes()
-        {
-            // This shit will convert THIS object to bytes
-            using (MemoryStream stream = new MemoryStream())
+            if (log.DownloadedFilepath.Length > 1)
             {
-                new BinaryFormatter().Serialize(stream, this);
-                return stream.ToArray();
+                try
+                {
+                    Process.Start(Directory.GetParent(log.DownloadedFilepath).FullName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
-        public static Save GetSave(byte[] source)
+
+        private void openFile_Click(Object sender, RoutedEventArgs e)
         {
-            // This shit, however, will convert bytes BACK into this object
-            using (MemoryStream stream = new MemoryStream(source))
+            if (listBox.SelectedIndex == -1) return;
+            Log log = (Log)listBox.SelectedItem;
+
+            if (log.DownloadedFilepath.Length > 1)
             {
-                return (Save)new BinaryFormatter().Deserialize(stream);             
+                try
+                {
+                    Process.Start(log.DownloadedFilepath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // These below are serializable classes that can be converted into bytes and written to disc
+        [Serializable]
+        public class Log
+        {
+            public DateTime Timestamp { get; set; }
+            public string Message { get; set; }
+            public bool IsError { get; set; }
+            public string ErrorMessage { get; set; }
+            public string DownloadedFilepath { get; set; }
+            public string[] FoundPosts { get; set; }
+
+            public Log(string Message, DateTime timestamp, string filename = "", bool isError = false, string errMsg = "", string[] foundPosts = null)
+            {
+                this.Timestamp = timestamp;
+                this.Message = Message;
+                this.IsError = isError;
+                this.DownloadedFilepath = filename;
+                this.ErrorMessage = errMsg;
+                this.FoundPosts = foundPosts;
+            }
+        }
+
+        [Serializable]
+        public class Save
+        {
+            public string Tags { get; set; }
+            public string BlacklistedTags { get; set; }
+            public string ImageLimit { get; set; }
+            public string SizeLimit { get; set; }
+            public bool ContainVideo { get; set; }
+            public string FilePath { get; set; }
+            public string PageLimit { get; set; }
+            public bool SkipExisting { get; set; }
+
+            public double Left { get; set; }
+            public double Top { get; set; }
+            public double Width { get; set; }
+            public double Height { get; set; }
+            public bool IsFullscreen { get; set; }
+
+            public byte[] GetBytes()
+            {
+                // This shit will convert THIS object to bytes
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    new BinaryFormatter().Serialize(stream, this);
+                    return stream.ToArray();
+                }
+            }
+            public static Save GetSave(byte[] source)
+            {
+                // This shit, however, will convert bytes BACK into this object
+                using (MemoryStream stream = new MemoryStream(source))
+                {
+                    return (Save)new BinaryFormatter().Deserialize(stream);
+                }
             }
         }
     }
