@@ -430,10 +430,9 @@ namespace SankakuChannelDownloader
                     // Download actual image
                     var imageLink = a.GetFullImageLink();
 
-                    // var extension = new Regex(@".*?\.([jpg,gif,png,jpeg,webm,mp4,bmp]*?)\?", RegexOptions.IgnoreCase).Match(imageLink).Groups[1].Value;
-                    //string filename = $"{path}\\{a.PostID}.{extension}";
-
-                    var filen = new Regex(@"\/data.*?\/([^\/]*?)\?", RegexOptions.Singleline).Match(imageLink).Groups[1].Value;                   
+                    var imageLinkShortened = imageLink.Substring(imageLink.LastIndexOf('/') + 1);
+                    Match match = new Regex(@"(.*?)(\.[a-z,0-5]{0,5})", RegexOptions.Singleline).Match(imageLinkShortened);
+                    var filen = match.Groups[1].Value + match.Groups[2].Value;                
                     string filename = $"{path}\\{filen}";
                     if (WriteToCache(a.PostID, filen, out string ErrorMsg) == false)
                     {
@@ -564,9 +563,25 @@ namespace SankakuChannelDownloader
                     else WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
                     #endregion
                 }
+                catch (UriFormatException ex)
+                {
+                    if (SecondsWaited == 0) WriteToLog(ex.Message, isError: true, exMessage: ex.Message);
+
+                    if (SecondsWaited < 100) SecondsWaited += 15;
+                    else if (SecondsWaited >= 100)
+                    {
+                        WriteToLog("Stopped retrying. This post was skipped.");
+                        SecondsWaited = 0;
+                        continue;
+                    }
+
+                    WriteToLog($"Retrying in {SecondsWaited} seconds...");
+                    Thread.Sleep(SecondsWaited * 1000);
+                    goto download;
+                }
                 catch (Exception ex)
                 {
-                    WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message); 
+                    WriteToLog("ERROR: " + ex.Message + $"({ex.GetType().ToString()})", isError: true, exMessage: ex.Message); 
                 }
             }
 
@@ -597,7 +612,7 @@ namespace SankakuChannelDownloader
             if (CheckCacheForFilename(postID) != null) return true;
 
             try
-            {
+            {              
                 File.AppendAllLines(CachePath, new string[] { $"{postID}:{filename}" });
                 return true;
             }
@@ -620,6 +635,8 @@ namespace SankakuChannelDownloader
                 {
                     try
                     {
+                        if (line.Length < 5) continue;
+
                         var firstIndex = line.IndexOf(':');
                         var stringPostID = line.Substring(0, firstIndex);
                         var stringFilename = line.Substring(firstIndex + 1, line.Length - (firstIndex + 1));
