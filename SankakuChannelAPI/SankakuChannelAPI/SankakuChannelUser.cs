@@ -84,11 +84,11 @@ namespace SankakuChannelAPI
             SankakuHttpHandler.SendQuery(this, query, out List<SankakuPost> results, page, limit);
             return results;
         }
-        public bool Favorite(int postID, out bool wasUnfavorited)
+        public bool Favorite(SankakuPost postData, out bool wasUnfavorited)
         {
             if (IsAuthenicated == false) throw new InvalidOperationException("You need to be authenticated to use the Search functionality!");
 
-            return SankakuHttpHandler.FavoritePost(this, postID, out wasUnfavorited);            
+            return SankakuHttpHandler.FavoritePost(this, postData, out wasUnfavorited);            
         }
     }
 }

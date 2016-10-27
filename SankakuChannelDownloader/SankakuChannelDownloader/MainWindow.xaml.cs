@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Windows.Threading;
 
 namespace SankakuChannelDownloader
 {
@@ -423,7 +424,7 @@ namespace SankakuChannelDownloader
                         {
                             double procentage = ((double)(foundPosts.IndexOf(a) + 1) / (double)foundPosts.Count) * 100;
 
-                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{foundFilename}\"", false, foundFilename, postInfo: a, wasSkipped: true);
+                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{foundFilename}\" (ID: {a.PostID})", false, foundFilename, postInfo: a, wasSkipped: true);
                             stats.PostsDownloaded++;
                             continue;
                         }
@@ -457,7 +458,7 @@ namespace SankakuChannelDownloader
 
                         // Display progress
                         double procentage = ((double)(foundPosts.IndexOf(a) + 1) / (double)foundPosts.Count) * 100;
-                        WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Downloaded \"{filename}\" ({Math.Round(((data.Length / 1024.0)/1024.9), 2)}MB)", true, filename);
+                        WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Downloaded \"{filename}\" ({Math.Round(((data.Length / 1024.0)/1024.9), 2)}MB) (ID: {a.PostID})", true, filename, postInfo: a);
                         UpdateETA(stats);
 
                         stats.PostsDownloaded++;
@@ -743,7 +744,7 @@ namespace SankakuChannelDownloader
             }
         }
 
-        private void fav_Click(Object sender, RoutedEventArgs e)
+        private async void fav_Click(Object sender, RoutedEventArgs e)
         {
             if (listBox.SelectedIndex == -1) return;
             Log log = (Log)listBox.SelectedItem;
@@ -752,16 +753,23 @@ namespace SankakuChannelDownloader
             {
                 try
                 {
-                    if (User.Favorite(log.PostInformation.PostID, out bool wasUnfavorited) == true)
+                    Window win = this;
+                    Dispatcher ds = Dispatcher;
+                    await Task.Run(() =>
                     {
-                        MessageBox.Show(this, $"The selected post was {(wasUnfavorited ? "already" : "successfully")} favorited." +
-                            $"{(wasUnfavorited ? "\nThe post was now unfavorited." : "")}", 
-                            $"Post {(wasUnfavorited ? "already" : "")} favorited!", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(this, "Failed to favor/unfavor the selected post!", "Failed to favor!", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                        if (User.Favorite(log.PostInformation, out bool wasUnfavorited) == true)
+                        {
+                            ds.Invoke(() =>
+                            MessageBox.Show(win, $"The selected post was {(wasUnfavorited ? "already" : "successfully")} favorited. (Post ID: {log.PostInformation.PostID})" +
+                                $"{(wasUnfavorited ? "\nThe post was now unfavorited." : "")}",
+                                $"Post {(wasUnfavorited ? "already" : "")} favorited!", MessageBoxButton.OK, MessageBoxImage.Information));
+                        }
+                        else
+                        {
+                            ds.Invoke(() => MessageBox.Show(win, "Failed to favorite/unfavorite the selected post!", 
+                                "Failed to favor!", MessageBoxButton.OK, MessageBoxImage.Error));
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -769,6 +777,7 @@ namespace SankakuChannelDownloader
                 }
             }
         }
+
         // Because I have no better way to auto-hide opened context menus.... 
         private List<ContextMenu> openedContextMenus = new List<ContextMenu>();
         private void Window_PreviewMouseDown(Object sender, MouseButtonEventArgs e)
