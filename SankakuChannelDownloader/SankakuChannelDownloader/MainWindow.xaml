@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SankakuChannelDownloader"
         mc:Ignorable="d"
-        Title="Sankaku Channel Downloader" MinHeight="500" MinWidth="470" Height="500" Width="470" WindowStartupLocation="Manual" Icon="iconPNG.png" Closing="Window_Closing">
+        Title="Sankaku Channel Downloader" MinHeight="500" MinWidth="470" Height="500" Width="470" WindowStartupLocation="Manual" Icon="iconPNG.png" Closing="Window_Closing" PreviewMouseDown="Window_PreviewMouseDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="271*"/>
@@ -20,13 +20,21 @@
         <TextBlock x:Name="textBlock_Copy1" HorizontalAlignment="Left" Margin="87,128,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="92" Text="Type 0 for ALL" Foreground="#FFB4B4B4"/>
         <TextBlock x:Name="textBlock_Copy2" HorizontalAlignment="Left" Margin="10,213,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="204" Text="Where to download?"/>
         <TextBlock x:Name="txtPath" Margin="10,229,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Click here to select a destination" Foreground="#FF616161" MouseDown="txtPath_MouseDown" Grid.ColumnSpan="2"/>
-        <ListBox x:Name="listBox" DisplayMemberPath="Message" Margin="10,252,10,56" MouseDoubleClick="listBox_MouseDoubleClick" Grid.ColumnSpan="2">
-            <ListBox.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Open file" Name="openFile" Click="openFile_Click"></MenuItem>
-                    <MenuItem Header="Open containing folder" Name="openFolder" Click="openFolder_Click"></MenuItem>
-                </ContextMenu>
-            </ListBox.ContextMenu>
+        <ListBox x:Name="listBox" Margin="10,252,10,56" MouseDoubleClick="listBox_MouseDoubleClick" Grid.ColumnSpan="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Message}" Foreground="{Binding MessageColor}" MouseRightButtonUp="TextBlock_MouseRightButtonUp">
+                        <TextBlock.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Open file" Name="openFile" Click="openFile_Click"></MenuItem>
+                                <MenuItem Header="Open containing folder" Name="openFolder" Click="openFolder_Click"></MenuItem>
+                                <Separator></Separator>
+                                <MenuItem Header="Favor/Unfavor this post" Name="fav" Click="fav_Click"></MenuItem>
+                            </ContextMenu>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
         </ListBox>
         <TextBlock x:Name="txtETA" Margin="10,0,164,35" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="Remaining (ETA):" Grid.ColumnSpan="2"/>
         <CheckBox x:Name="checkboxFilterVideos" Content="Don't download video files&#xA;" HorizontalAlignment="Left" Margin="6,99,0,0" VerticalAlignment="Top" Height="16" IsTabStop="False" Grid.Column="1"/>
@@ -35,7 +43,7 @@
         <TextBox x:Name="txtSizeLimit" Height="24" Margin="10,175,0,0" MaxLength="3" TextWrapping="Wrap" VerticalAlignment="Top" SpellCheck.IsEnabled="True" TabIndex="4" HorizontalAlignment="Left" Width="72" Text="0" GotFocus="txtImageCount_GotFocus"/>
         <TextBlock x:Name="textBlock_Copy4" HorizontalAlignment="Left" Margin="10,156,0,0" TextWrapping="Wrap" Text="Size limit for one file: (in MB)" VerticalAlignment="Top" Width="224"/>
         <TextBlock x:Name="textBlock_Copy5" HorizontalAlignment="Left" Margin="87,179,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="113" Foreground="#FFB4B4B4"><Run Text="Type 0 for "/><Run Text="NO LIMIT"/></TextBlock>
-        <TextBlock x:Name="txtETA_Copy" Margin="10,0,0,10" TextWrapping="Wrap" VerticalAlignment="Bottom" Foreground="#FFB4B4B4" HorizontalAlignment="Left" Width="288" Grid.ColumnSpan="2" Text="Try double clicking on some logs."/>
+        <TextBlock x:Name="txtETA_Copy" Margin="10,0,0,10" TextWrapping="Wrap" VerticalAlignment="Bottom" Foreground="#FFB4B4B4" HorizontalAlignment="Left" Width="288" Grid.ColumnSpan="2" Text="Try double/right clicking on some logs."/>
         <CheckBox x:Name="checkBoxSkip" Content="Skip existing files" HorizontalAlignment="Left" Margin="6,120,0,0" VerticalAlignment="Top" Height="16" IsTabStop="False" Grid.Column="1"/>
         <TextBox x:Name="txtStartingPage" Height="24" Margin="6,181,0,0" MaxLength="3" TextWrapping="Wrap" VerticalAlignment="Top" SpellCheck.IsEnabled="True" TabIndex="5" HorizontalAlignment="Left" Width="77" Text="1" GotFocus="txtImageCount_GotFocus" Grid.Column="1"/>
         <TextBlock x:Name="textBlock_Copy6" HorizontalAlignment="Left" Margin="6,162,0,0" TextWrapping="Wrap" Text="Starting page:" VerticalAlignment="Top" Width="102" Grid.Column="1"/>

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace SankakuChannelAPI
 {
+    [Serializable]
     public class SankakuPost
     {
         public int PostID { get; }

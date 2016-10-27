@@ -14,3 +14,11 @@ C:\Users\adamv\Documents\Visual Studio 15\Projects\SankakuChannelAPI\TestingCons
 C:\Users\adamv\Documents\Visual Studio 15\Projects\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.csprojResolveAssemblyReference.cache
 C:\Users\adamv\Documents\Visual Studio 15\Projects\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.exe
 C:\Users\adamv\Documents\Visual Studio 15\Projects\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.pdb
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\bin\Debug\TestingConsole.exe.config
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\bin\Debug\TestingConsole.exe
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\bin\Debug\TestingConsole.pdb
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\bin\Debug\SankakuChannelAPI.dll
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\bin\Debug\SankakuChannelAPI.pdb
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.csprojResolveAssemblyReference.cache
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.exe
+D:\Documents\SankakuChannelDownloader\SankakuChannelAPI\TestingConsole\obj\Debug\TestingConsole.pdb
