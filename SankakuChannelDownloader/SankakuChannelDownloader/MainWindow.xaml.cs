@@ -203,8 +203,8 @@ namespace SankakuChannelDownloader
                 string path = txtPath.Text;
 
                 // Prompt if user is sure to continue...
-                if (MessageBox.Show("Are you sure you wish to start the download process?\n", "Are you sure?",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No) return;
+                /*if (MessageBox.Show("Are you sure you wish to start the download process?\n", "Are you sure?",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No) return;*/
 
                 ToggleControls(false);
                 btnStartDownload.Content = "Stop Download";
@@ -226,14 +226,16 @@ namespace SankakuChannelDownloader
             txtPageLimit.IsEnabled = state;
             txtStartingPage.IsEnabled = state;
         }
-        public void WriteToLog(string msg, bool registerTime = false, string filename = "", bool isError = false, string exMessage = "", string[] fndPosts = null)
+        public void WriteToLog(
+            string msg, bool registerTime = false, string filename = "", 
+            string exMessage = "", SankakuPost postInfo = null, string[] fndPosts = null, bool wasSkipped = false)
         {
             // Dispatcher needs to be called when interacting with the GUI - otherwise an error can be thrown
             Dispatcher.Invoke(() =>
             {
                 var date = DateTime.Now;
                 if (registerTime) RegisteredTimestamps.Add(date);
-                Logs.Add(new Log($"[{date.ToString("HH:mm:ss")}] " + msg, date, filename, isError, exMessage, fndPosts));  // <--- adding the log to my log collection
+                Logs.Add(new Log($"[{date.ToString("HH:mm:ss")}] " + msg, date, filename, exMessage, postInfo, fndPosts, wasSkipped));  // <--- adding the log to my log collection
 
                 listBox.ItemsSource = Logs;  // <-- displaying my log collection
                 listBox.Items.Refresh();     // <-- refreshing the view
@@ -330,7 +332,7 @@ namespace SankakuChannelDownloader
                     #region Error handling
                     if (ex.Message.ToLower().Contains("too many requests"))
                     {
-                        if (SecondsWaited == 0) WriteToLog("Too many requests", isError: true, exMessage: ex.Message);
+                        if (SecondsWaited == 0) WriteToLog("Too many requests", exMessage: ex.Message);
 
                         if (SecondsWaited < 60) SecondsWaited += 15;
                         else if (SecondsWaited >= 60 && SecondsWaited < 60 * 15) SecondsWaited += 120;
@@ -341,7 +343,7 @@ namespace SankakuChannelDownloader
                     }
                     else if (ex.Message.ToLower().Contains("remote name could not be resolved"))
                     {
-                        WriteToLog("Internet connection lost. Waiting for internet...", isError: true, exMessage: ex.Message);
+                        WriteToLog("Internet connection lost. Waiting for internet...", exMessage: ex.Message);
 
                         int secondsToWait = 2;
                         while (true)
@@ -375,7 +377,7 @@ namespace SankakuChannelDownloader
                         WriteToLog("Internet connection restored. Continuing task...");
                         goto search;
                     }
-                    else WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
+                    else WriteToLog("ERROR: " + ex.Message, exMessage: ex.Message);
                     #endregion
                 }
                 #endregion
@@ -421,7 +423,7 @@ namespace SankakuChannelDownloader
                         {
                             double procentage = ((double)(foundPosts.IndexOf(a) + 1) / (double)foundPosts.Count) * 100;
 
-                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{foundFilename}\"", false, foundFilename);
+                            WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Skipped existing file \"{foundFilename}\"", false, foundFilename, postInfo: a, wasSkipped: true);
                             stats.PostsDownloaded++;
                             continue;
                         }
@@ -436,7 +438,7 @@ namespace SankakuChannelDownloader
                     string filename = $"{path}\\{filen}";
                     if (WriteToCache(a.PostID, filen, out string ErrorMsg) == false)
                     {
-                        WriteToLog($"Failed to write to cache.", isError: true, exMessage: ErrorMsg);
+                        WriteToLog($"Failed to write to cache.", exMessage: ErrorMsg);
                     }
 
                     var data = a.DownloadFullImage(imageLink, out bool wasRedirected, containVideos, sizeLimit);
@@ -447,7 +449,7 @@ namespace SankakuChannelDownloader
                         // Check if post was too big/is a video file
                         if (data == null)
                         {
-                            WriteToLog($"The post '{a.PostID}' was skipped because of given conditions.");
+                            WriteToLog($"The post '{a.PostID}' was skipped because of given conditions.", wasSkipped: true);
                             continue;
                         }
 
@@ -455,7 +457,7 @@ namespace SankakuChannelDownloader
 
                         // Display progress
                         double procentage = ((double)(foundPosts.IndexOf(a) + 1) / (double)foundPosts.Count) * 100;
-                        WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Downloaded \"{filename}\"", true, filename);
+                        WriteToLog($"[{procentage.ToString("0.000") + "%",-10}] Downloaded \"{filename}\" ({Math.Round(((data.Length / 1024.0)/1024.9), 2)}MB)", true, filename);
                         UpdateETA(stats);
 
                         stats.PostsDownloaded++;
@@ -474,7 +476,7 @@ namespace SankakuChannelDownloader
                     if (ex.Message.ToLower().Contains("too many requests"))
                     {
                         #region Too Many Requests
-                        if (SecondsWaited == 0) WriteToLog("Too many requests", isError: true, exMessage: ex.Message);
+                        if (SecondsWaited == 0) WriteToLog("Too many requests", exMessage: ex.Message);
 
                         if (SecondsWaited < 60) SecondsWaited += 15;
                         else if (SecondsWaited >= 60 && SecondsWaited < 60 * 15) SecondsWaited += 120;
@@ -487,7 +489,7 @@ namespace SankakuChannelDownloader
                     else if (ex.Message.ToLower().Contains("remote name could not be resolved"))
                     {
                         #region No Internet
-                        WriteToLog("Internet connection lost. Waiting for internet...", isError: true, exMessage: ex.Message);
+                        WriteToLog("Internet connection lost. Waiting for internet...", exMessage: ex.Message);
 
                         int secondsToWait = 2;
                         while (true)
@@ -525,7 +527,7 @@ namespace SankakuChannelDownloader
                     else if (ex.Message.ToLower().Contains("time") && ex.Message.ToLower().Contains("out"))
                     {
                         #region Timeout
-                        WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
+                        WriteToLog("ERROR: " + ex.Message, exMessage: ex.Message);
                         WriteToLog("Attempting to restore the connection...");
 
                         while (true)
@@ -560,7 +562,7 @@ namespace SankakuChannelDownloader
                         }
                         #endregion
                     }
-                    else WriteToLog("ERROR: " + ex.Message, isError: true, exMessage: ex.Message);
+                    else WriteToLog("ERROR: " + ex.Message, exMessage: ex.Message);
                     #endregion
                 }
                 catch (UriFormatException)
@@ -568,11 +570,11 @@ namespace SankakuChannelDownloader
                     // This exception gets thrown when a flash game is encountered on Sankaku and does not have a source link
 
                     // <param name=movie value="//cs.sankakucomplex.com/data/f6/23/f623ea7559ef39d96ebb0ca7530586b8.swf?3378073">
-                    WriteToLog("Skipping invalid post.");
+                    WriteToLog("Skipping invalid post.", wasSkipped: true);
                 }
                 catch (Exception ex)
                 {
-                    WriteToLog("ERROR: " + ex.Message + $"({ex.GetType().ToString()})", isError: true, exMessage: ex.Message);
+                    WriteToLog("ERROR: " + ex.Message + $"({ex.GetType().ToString()})",  exMessage: ex.Message);
                 }
             }
 
@@ -653,8 +655,8 @@ namespace SankakuChannelDownloader
             // ... otherwise get the selected Log
             Log log = (Log)listBox.SelectedItem;
 
-            // if it's a picture, open it, using the default program
-            if (log.DownloadedFilepath.Length > 1)
+            // if it's a picture, open it using the default program
+            if (log.IsPost)
             {
                 try
                 {
@@ -728,7 +730,7 @@ namespace SankakuChannelDownloader
             if (listBox.SelectedIndex == -1) return;
             Log log = (Log)listBox.SelectedItem;
 
-            if (log.DownloadedFilepath.Length > 1)
+            if (log.IsPost)
             {
                 try
                 {
@@ -741,25 +743,94 @@ namespace SankakuChannelDownloader
             }
         }
 
-        // These below are serializable classes that can be converted into bytes and written to disc
+        private void fav_Click(Object sender, RoutedEventArgs e)
+        {
+            if (listBox.SelectedIndex == -1) return;
+            Log log = (Log)listBox.SelectedItem;
+
+            if (log.IsPost)
+            {
+                try
+                {
+                    if (User.Favorite(log.PostInformation.PostID, out bool wasUnfavorited) == true)
+                    {
+                        MessageBox.Show(this, $"The selected post was {(wasUnfavorited ? "already" : "successfully")} favorited." +
+                            $"{(wasUnfavorited ? "\nThe post was now unfavorited." : "")}", 
+                            $"Post {(wasUnfavorited ? "already" : "")} favorited!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        MessageBox.Show(this, "Failed to favor/unfavor the selected post!", "Failed to favor!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, ex.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        // Because I have no better way to auto-hide opened context menus.... 
+        private List<ContextMenu> openedContextMenus = new List<ContextMenu>();
+        private void Window_PreviewMouseDown(Object sender, MouseButtonEventArgs e)
+        {
+            // close any opened context menus...
+            foreach (var menu in openedContextMenus)
+            {
+                menu.Visibility = Visibility.Collapsed;
+            }
+            openedContextMenus.Clear();
+        }
+
+        private void TextBlock_MouseRightButtonUp(Object sender, MouseButtonEventArgs e)
+        {
+            var src = (TextBlock)e.OriginalSource;
+            var log = (Log)src.DataContext;
+
+            ContextMenu menu = src.ContextMenu;
+            menu.Visibility = Visibility.Visible;
+            menu.IsEnabled = log.IsPost;
+            openedContextMenus.Add(menu);
+        }
+
         [Serializable]
         public class Log
         {
             public DateTime Timestamp { get; set; }
             public string Message { get; set; }
-            public bool IsError { get; set; }
+            public Brush MessageColor { get; set; }
+
+            // If it's an error...
+            public bool IsError { get; set; } = false;
             public string ErrorMessage { get; set; }
+
+            // If it's a downloaded post...
+            public bool IsPost { get; set; } = false;
             public string DownloadedFilepath { get; set; }
+            public SankakuPost PostInformation { get; set; }
+
+            // If it's a "Found" log...
             public string[] FoundPosts { get; set; }
 
-            public Log(string Message, DateTime timestamp, string filename = "", bool isError = false, string errMsg = "", string[] foundPosts = null)
+            public Log(string Message, DateTime timestamp, string filename = "", string errMsg = "", SankakuPost postInformation = null, string[] foundPosts = null, bool wasSkipped = false)
             {
                 this.Timestamp = timestamp;
                 this.Message = Message;
-                this.IsError = isError;
+                
                 this.DownloadedFilepath = filename;
-                this.ErrorMessage = errMsg;
+                this.PostInformation = postInformation;
+                this.IsPost = DownloadedFilepath.Length > 1;
+
+                if (IsPost == false)
+                {
+                    this.ErrorMessage = errMsg;
+                    this.IsError = ErrorMessage.Length > 1;
+                }
+
                 this.FoundPosts = foundPosts;
+
+                if (IsError) MessageColor = Brushes.Red;
+                else if (wasSkipped) MessageColor = Brushes.Gray;
+                else MessageColor = Brushes.Black;
             }
         }
 

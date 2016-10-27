@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using SankakuChannelAPI;
+using System.Windows.Threading;
 
 namespace SankakuChannelDownloader
 {
@@ -47,9 +48,9 @@ namespace SankakuChannelDownloader
                 txtPassword.IsEnabled = false;
                 txtUsername.IsEnabled = false;
                 SankakuChannelUser user = new SankakuChannelUser(txtUsername.Text, txtPassword.Password);
-
+                
                 // Attempt to login - start Task, so the UI thread won't get blocked by unnecessary work
-                var success = await Task.Run(() => LoginUser(user)); 
+                var success = await Task.Run(() => LoginUser(user, associatedWindow: this, associatedWindowDispatcher: Dispatcher)); 
                 if (success)
                 {
                     // if successful login, set the user and close the window
@@ -66,23 +67,33 @@ namespace SankakuChannelDownloader
             }
         }
 
-        public static bool LoginUser(SankakuChannelUser user, bool supressMessagebox = false)
+        public static bool LoginUser(SankakuChannelUser user, 
+            bool supressMessagebox = false, 
+            Window associatedWindow = null, 
+            Dispatcher associatedWindowDispatcher = null)
         {
             bool tooMany = false;
             if (user.IsAuthenicated) user.LogOut();
 
-            // Attempt to login -- this here actually calls my API 
-            var success = user.Authenticate(out tooMany);
+            try
+            {
+                var success = user.Authenticate(out tooMany);
+                if (success) return true;
+                else
+                {
+                    if (supressMessagebox == false)
+                        associatedWindowDispatcher?.Invoke(() => MessageBox.Show(associatedWindow, $"Failed to login!" +
+                            $"{(tooMany ? "\n\nToo many requests! Please wait a few minutes before trying again!" : " Try again!")}", "Login fail", MessageBoxButton.OK, MessageBoxImage.Error));
 
-            if (success)
-            {
-                return true;              
+                    return false;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                if(supressMessagebox == false) MessageBox.Show($"Failed to login!{(tooMany ? "\n\nToo many requests! Please wait a few minutes before trying again!" : " Try again!")}", "Login fail", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (supressMessagebox == false)
+                    associatedWindowDispatcher?.Invoke(() => MessageBox.Show(associatedWindow, "Failed to login. Unexpected error occurred:\n\n" + ex.Message, "Failed to login!", MessageBoxButton.OK, MessageBoxImage.Error));
                 return false;
-            }
+            } 
         }
     }
 }
