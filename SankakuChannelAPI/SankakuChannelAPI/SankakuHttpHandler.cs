@@ -129,9 +129,57 @@ namespace SankakuChannelAPI
                 throw ex;
             }
         }
-        public static bool FavoritePost(SankakuChannelUser user, int postID, out bool wasUnfavorited)
+        public static bool FavoritePost(SankakuChannelUser user, SankakuPost postData, out bool wasUnfavorited)
         {
-            throw new NotImplementedException();
+            bool liking = true;
+            like:
+            try
+            {
+                wasUnfavorited = liking == false;
+
+                var request = liking ? (HttpWebRequest)WebRequest.Create("https://chan.sankakucomplex.com/favorite/create.json") :
+                                       (HttpWebRequest)WebRequest.Create("https://chan.sankakucomplex.com/favorite/destroy.json");
+
+                request.Method = "POST";
+                request.Host = "chan.sankakucomplex.com";
+                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36";
+                request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+                request.Headers.Add("X-Prototype-Version", "1.6.0.3");
+                request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+                request.Headers.Add("Origin", "https://chan.sankakucomplex.com");
+                request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
+                request.Headers.Add("Accept-Language", "en-US,en;q=0.8,sl;q=0.6");
+                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                request.Referer = postData.PostReference;
+                request.Headers.Add("Cookie", $"__cfduid={user.cfduid}; hide_resized_notice=1; login={user.Username}; pass_hash={user.PasswordHash}; " +
+                    $"__atuvc=24%7C43; __atuvs=580cc97684a60c23003; mode=view; auto_page=1; " +
+                    $"blacklisted_tags=full-package_futanari&futanari; locale=en; _sankakucomplex_session={user.SankakuComplexSessionID}");
+
+                string cnt = $"id={postData.PostID}&_=";
+                var contentBytes = Encoding.ASCII.GetBytes(cnt);
+                request.ContentLength = contentBytes.Length;
+                var reqStream = request.GetRequestStream();
+                reqStream.Write(contentBytes, 0, contentBytes.Length);
+                reqStream.Close();
+
+                // get response
+                var response = (HttpWebResponse)request.GetResponse();
+                var content = Encoding.UTF8.GetString(GZipDecompress(response.GetResponseStream()));
+                response.Close();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.ToLower().Contains("423") && ex.Message.ToLower().Contains("locked"))
+                {
+                    // the post was already favorited
+                    liking = false;                   
+                    goto like;
+                }
+
+                throw ex;
+            }
         }
         public static string GetImageLink(SankakuChannelUser user, string postReference)
         {

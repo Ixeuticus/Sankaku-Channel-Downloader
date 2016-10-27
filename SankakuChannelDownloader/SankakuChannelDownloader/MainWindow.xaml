@@ -29,7 +29,7 @@
                                 <MenuItem Header="Open file" Name="openFile" Click="openFile_Click"></MenuItem>
                                 <MenuItem Header="Open containing folder" Name="openFolder" Click="openFolder_Click"></MenuItem>
                                 <Separator></Separator>
-                                <MenuItem Header="Favor/Unfavor this post" Name="fav" Click="fav_Click"></MenuItem>
+                                <MenuItem Header="Favorite/Unfavorite this post" Name="fav" Click="fav_Click"></MenuItem>
                             </ContextMenu>
                         </TextBlock.ContextMenu>
                     </TextBlock>
