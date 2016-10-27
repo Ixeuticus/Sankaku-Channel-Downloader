@@ -27,7 +27,7 @@ namespace SankakuChannelAPI
                 cookieRequest.Headers.Add("Accept-Language: en-US,en;q=0.8,sl;q=0.6");
                 cookieRequest.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36";
                 cookieRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-                cookieRequest.Timeout = 10 * 1000;
+                cookieRequest.Timeout = 18 * 1000;
                 // Get cookie ID response
                 var cookieResponse = (HttpWebResponse)cookieRequest.GetResponse();
                 var cookieValue = cookieResponse.GetResponseHeader("Set-Cookie");
@@ -56,7 +56,7 @@ namespace SankakuChannelAPI
                 var reqStream = request.GetRequestStream();
                 reqStream.Write(contentBytes, 0, contentBytes.Length);
                 reqStream.Close();
-                request.Timeout = 10 * 1000;
+                request.Timeout = 18 * 1000;
 
                 // get login data
                 var response = (HttpWebResponse)request.GetResponse();
@@ -81,6 +81,7 @@ namespace SankakuChannelAPI
             }
             catch { return false; }
         }
+
         public static bool SendQuery(SankakuChannelUser user, string query, out List<SankakuPost> results, int page = 1, int limit = 15)
         {
             results = new List<SankakuPost>();
@@ -127,6 +128,10 @@ namespace SankakuChannelAPI
             {
                 throw ex;
             }
+        }
+        public static bool FavoritePost(SankakuChannelUser user, int postID, out bool wasUnfavorited)
+        {
+            throw new NotImplementedException();
         }
         public static string GetImageLink(SankakuChannelUser user, string postReference)
         {

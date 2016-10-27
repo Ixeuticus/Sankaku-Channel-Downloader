@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace SankakuChannelAPI
 {
+    [Serializable]
     public class SankakuChannelUser
     {
         public string Username { get; private set; }
@@ -82,6 +83,12 @@ namespace SankakuChannelAPI
             if (IsAuthenicated == false) throw new InvalidOperationException("You need to be authenticated to use the Search functionality!");
             SankakuHttpHandler.SendQuery(this, query, out List<SankakuPost> results, page, limit);
             return results;
+        }
+        public bool Favorite(int postID, out bool wasUnfavorited)
+        {
+            if (IsAuthenicated == false) throw new InvalidOperationException("You need to be authenticated to use the Search functionality!");
+
+            return SankakuHttpHandler.FavoritePost(this, postID, out wasUnfavorited);            
         }
     }
 }
