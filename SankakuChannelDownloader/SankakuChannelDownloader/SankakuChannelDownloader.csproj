@@ -38,9 +38,6 @@
     <ApplicationIcon>iconDownloader.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SankakuChannelAPI">
-      <HintPath>..\..\SankakuChannelAPI\SankakuChannelAPI\bin\Debug\SankakuChannelAPI.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Windows.Forms" />
@@ -122,6 +119,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="iconDownloader.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SankakuChannelAPI\SankakuChannelAPI\SankakuChannelAPI.csproj">
+      <Project>{f9c57458-a228-480d-b7aa-c2b3498d862b}</Project>
+      <Name>SankakuChannelAPI</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
