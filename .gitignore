@@ -5,3 +5,6 @@ SankakuChannelDownloader/SankakuChannelDownloader/bin/Debug/save.data
 SankakuChannelDownloader/SankakuChannelDownloader/bin/Debug/cache.data
 SankakuChannelAPI/.vs/SankakuChannelAPI/v15/sqlite3/storage.ide
 SankakuChannelDownloader/SankakuChannelDownloader/bin/
+SankakuChannelDownloader/.vs/SankakuChannelDownloader/v15/
+SankakuChannelAPI/SankakuChannelAPI/bin/Release/SankakuChannelAPI.dll
+SankakuChannelAPI/SankakuChannelAPI/bin/

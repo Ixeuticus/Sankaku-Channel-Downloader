@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SankakuChannelAPI
 {
@@ -40,10 +36,10 @@ namespace SankakuChannelAPI
         public byte[] DownloadFullImage(out string imageLink, out bool wasRedirected)
         {
             imageLink = GetFullImageLink();
-            return SankakuHttpHandler.DownloadImage(AssociatedUser, imageLink, out wasRedirected, true, 0);
+            return SankakuHttpHandler.DownloadImage(AssociatedUser, imageLink, out wasRedirected, true, 0, PostID);
         }
-        public byte[] DownloadFullImage(out bool wasRedirected) => SankakuHttpHandler.DownloadImage(AssociatedUser, GetFullImageLink(), out wasRedirected, true, 0);
+        public byte[] DownloadFullImage(out bool wasRedirected) => SankakuHttpHandler.DownloadImage(AssociatedUser, GetFullImageLink(), out wasRedirected, true, 0, PostID);
 
-        public byte[] DownloadFullImage(string imageLink, out bool wasRedirected, bool containsVideo, double sizeLimitMB) => SankakuHttpHandler.DownloadImage(AssociatedUser, GetFullImageLink(), out wasRedirected, containsVideo, sizeLimitMB);
+        public byte[] DownloadFullImage(string imageLink, out bool wasRedirected, bool containsVideo, double sizeLimitMB) => SankakuHttpHandler.DownloadImage(AssociatedUser, GetFullImageLink(), out wasRedirected, containsVideo, sizeLimitMB, PostID);
     }
 }

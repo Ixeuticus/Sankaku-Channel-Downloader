@@ -88,21 +88,22 @@ namespace SankakuChannelAPI
             try
             {
                 string convertedQuery = query.Replace(" ", "+");
-                var request = (HttpWebRequest)WebRequest.Create($"https://chan.sankakucomplex.com/?tags={convertedQuery}&limit={limit}&page={page}");
+
+                var request = (HttpWebRequest)WebRequest.Create($"https://chan.sankakucomplex.com/post/index.content?&tags={convertedQuery}&page={page}");
                 request.Method = "GET";
-                request.Headers.Add("Cache-Control", "max-age=0");
-                request.Headers.Add("Upgrade-Insecure-Requests", "1");
+                request.Referer = "https://chan.sankakucomplex.com/?tags={convertedQuery}&commit=Search";
                 request.Host = "chan.sankakucomplex.com";
                 request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36";
-                request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-                request.Headers.Add("Accept-Encoding", "gzip, deflate, sdch, br");
-                request.Headers.Add("Accept-Language", "en-US,en;q=0.8,sl;q=0.6");
+                request.Accept = "text/html, */*";
+                request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
+                request.Headers.Add("Accept-Language", "en-GB,en;q=0.8,sl;q=0.6");
                 request.Headers.Add("Cookie", $"__cfduid={user.cfduid}; login={user.Username}; pass_hash={user.PasswordHash}; " +
                     $"__atuvc=24%7C43; __atuvs=580cc97684a60c23003; mode=view; auto_page=1; " +
                     $"blacklisted_tags=full-package_futanari&futanari; locale=en; _sankakucomplex_session={user.SankakuComplexSessionID}");
+                request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
                 var response = (HttpWebResponse)request.GetResponse();
-                var content = Encoding.UTF8.GetString(GZipDecompress(response.GetResponseStream()));
+                var content = Encoding.UTF8.GetString(ReadStream(response.GetResponseStream()));
                 response.Close();
 
                 Regex rgx = new Regex(@"<span class="".*?"" id=.*?><a href=""\/post\/show\/(.*?)"" onclick="".*?"">" +
@@ -154,6 +155,7 @@ namespace SankakuChannelAPI
                 request.Headers.Add("Cookie", $"__cfduid={user.cfduid}; hide_resized_notice=1; login={user.Username}; pass_hash={user.PasswordHash}; " +
                     $"__atuvc=24%7C43; __atuvs=580cc97684a60c23003; mode=view; auto_page=1; " +
                     $"blacklisted_tags=full-package_futanari&futanari; locale=en; _sankakucomplex_session={user.SankakuComplexSessionID}");
+                request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
                 string cnt = $"id={postData.PostID}&_=";
                 var contentBytes = Encoding.ASCII.GetBytes(cnt);
@@ -164,7 +166,7 @@ namespace SankakuChannelAPI
 
                 // get response
                 var response = (HttpWebResponse)request.GetResponse();
-                var content = Encoding.UTF8.GetString(GZipDecompress(response.GetResponseStream()));
+                var content = Encoding.UTF8.GetString(ReadStream(response.GetResponseStream()));
                 response.Close();
 
                 return true;
@@ -189,34 +191,35 @@ namespace SankakuChannelAPI
             request.Headers.Add("Cache-Control", "max-age=0");
             request.Headers.Add("Upgrade-Insecure-Requests", "1");
             request.Host = "chan.sankakucomplex.com";
-            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36";
+            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
             request.Headers.Add("Accept-Encoding", "gzip, deflate, sdch, br");
             request.Headers.Add("Accept-Language", "en-US,en;q=0.8,sl;q=0.6");
             request.Headers.Add("Cookie", $"__cfduid={user.cfduid}; login={user.Username}; pass_hash={user.PasswordHash}; " +
                $"__atuvc=24%7C43; __atuvs=580cc97684a60c23003; mode=view; auto_page=1; " +
                $"blacklisted_tags=full-package_futanari&futanari; locale=en; _sankakucomplex_session={user.SankakuComplexSessionID}");
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
             var response = (HttpWebResponse)request.GetResponse();
-            var content = Encoding.UTF8.GetString(GZipDecompress(response.GetResponseStream()));
+            var content = Encoding.UTF8.GetString(ReadStream(response.GetResponseStream()));
             response.Close();
 
             Regex rgx = new Regex(@"<li>Original: <a href=""(.*?)"" id=highres.*?<\/a><\/li>", RegexOptions.Singleline);
             return "http:" + rgx.Match(content).Groups[1].Value;            
         }
-        public static byte[] DownloadImage(SankakuChannelUser user, string imageLink, out bool wasRedirected, bool containsVideo, double sizeLimit)
+        public static byte[] DownloadImage(SankakuChannelUser user, string imageLink, out bool wasRedirected, bool containsVideo, double sizeLimit, int postId)
         {
             wasRedirected = false;
 
-            var request = (HttpWebRequest)WebRequest.Create(imageLink);
-
+            var request = (HttpWebRequest)WebRequest.Create(imageLink.Replace("&amp;", "&"));
+            request.Method = "GET";
             request.Host = "cs.sankakucomplex.com";
-            request.Headers.Add("Upgrade-Insecure-Requests", "1");
-            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+            request.Referer = "https://chan.sankakucomplex.com/post/show/" + postId;
+            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36";
+            request.Accept = "image/webp,image/apng,image/*,*/*;q=0.8";
             request.Headers.Add("Accept-Encoding", "gzip, deflate, sdch");
             request.Headers.Add("Accept-Language", "en-US,en;q=0.8,sl;q=0.6");
-            request.Headers.Add("Cookie", $"__cfduid={user.cfduid}");
+            // request.Headers.Add("Cookie", $"__cfduid={user.cfduid}");
 
             request.Timeout = 1000 * 20;
             var response = (HttpWebResponse)request.GetResponse();
@@ -269,17 +272,14 @@ namespace SankakuChannelAPI
                 return stream.ToArray();
             }
         }
-        public static byte[] GZipDecompress(Stream streamToDecompress)
+        
+        public static byte[] ReadStream(Stream str)
         {
-            using (MemoryStream stream = new MemoryStream())
+            using (var mstream = new MemoryStream())
             {
-                using (GZipStream comprStream =
-                    new GZipStream(streamToDecompress, CompressionMode.Decompress))
-                {
-                    comprStream.CopyTo(stream);
-                }
-
-                return stream.ToArray();
+                str.CopyTo(mstream);
+                str.Flush();
+                return mstream.ToArray();
             }
         }
     }
