@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.25807.0
+VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SankakuChannelAPI", "SankakuChannelAPI\SankakuChannelAPI.csproj", "{F9C57458-A228-480D-B7AA-C2B3498D862B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestingConsole", "TestingConsole\TestingConsole.csproj", "{A46E1B05-0E8D-45E5-8686-B80B681ACC5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,12 +15,11 @@ Global
 		{F9C57458-A228-480D-B7AA-C2B3498D862B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9C57458-A228-480D-B7AA-C2B3498D862B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9C57458-A228-480D-B7AA-C2B3498D862B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A46E1B05-0E8D-45E5-8686-B80B681ACC5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A46E1B05-0E8D-45E5-8686-B80B681ACC5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A46E1B05-0E8D-45E5-8686-B80B681ACC5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A46E1B05-0E8D-45E5-8686-B80B681ACC5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {787F5E94-3FE0-4401-911F-59620EC70BD9}
 	EndGlobalSection
 EndGlobal
