@@ -10,6 +10,8 @@ namespace SankakuAPI
 {
     public class SankakuChannelClient
     {
+        public string Username { get; set; }
+        string PasswordHash { get; set; }
         HttpClientHandler handler;
         HttpClient client;
 
@@ -54,11 +56,11 @@ namespace SankakuAPI
 
         public async Task Search(string tags)
         {
-            int limit = 100;
+            int limit = 20;
             int page = 1;
 
             // for this use "text/html accept"
-            var msg = await client.GetAsync($"post/index.xml?tags={tags}"); // limit={limit}&page={page}
+            var msg = await client.GetAsync($"post/index.json?login={Username}&password_hash={PasswordHash}&tags={tags}&page={page}");
             TransferCookies(msg);
             msg.EnsureSuccessStatusCode();
 
@@ -69,7 +71,13 @@ namespace SankakuAPI
         {
             response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookies);
             if (cookies == null) return;
-            foreach (var c in cookies) handler.CookieContainer.SetCookies(client.BaseAddress, c);
+            foreach (var c in cookies)
+            {
+                if (c.StartsWith("login")) Username = c.Substring(6, c.IndexOf(';') - 6);
+                else if (c.StartsWith("pass_hash")) PasswordHash = c.Substring(10, c.IndexOf(';') - 10);
+
+                handler.CookieContainer.SetCookies(client.BaseAddress, c);
+            }
         }
     }
 }
