@@ -32,6 +32,8 @@ namespace SankakuAPI
         public long FileSize { get; set; }
         [JsonProperty("total_score")]
         public int Score { get; set; }
+        [JsonProperty("tags")]
+        public List<SankakuTag> Tags { get; set; }
         public string FileName
         {
             get
@@ -42,5 +44,18 @@ namespace SankakuAPI
             }
         }
         public double FileSizeMB => (FileSize / 1024.0) / 1024.0;
+    }
+
+    public class SankakuTag
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+        [JsonProperty("type")]
+        public int Type { get; set; }
+        [JsonProperty("name")]
+        public string Name { get; set; }
+        [JsonProperty("name_ja")]
+        public string NameJA { get; set; }
+        public override string ToString() => Name;
     }
 }
