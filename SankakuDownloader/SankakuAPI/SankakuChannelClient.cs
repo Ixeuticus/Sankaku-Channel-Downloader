@@ -14,22 +14,23 @@ namespace SankakuAPI
     public class SankakuChannelClient
     {
         public string Username { get; set; }
+        public string PasswordHash { get; set; }
 
         #region Private Properties
         const string BaseURL = "https://capi-beta.sankakucomplex.com";
-        string PasswordHash { get; set; }
         string AppKey { get; set; }
         string Credentials => $"login={HttpUtility.UrlEncode(Username)}&password_hash={PasswordHash}&appkey={AppKey}";
         HttpClient client; 
         #endregion
 
 
-        public SankakuChannelClient(string username, string password)
+        public SankakuChannelClient(string username, string password, bool hashWasGiven = false)
         {
             InitializeClient();
 
-            Username = username;
-            PasswordHash = sha1($"choujin-steiner--{password}--");
+            Username = username ?? "";
+            password = password ?? "";
+            PasswordHash = hashWasGiven ? password : sha1($"choujin-steiner--{password}--");
             AppKey = sha1($"sankakuapp_{Username.ToLower()}_Z5NE9YASej");
         }
 

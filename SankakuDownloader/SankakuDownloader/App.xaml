@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:SankakuDownloader"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <local:MainViewModel x:Key="viewModel" />
     </Application.Resources>
 </Application>
