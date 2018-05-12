@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SankakuChannelDownloader.Properties
+namespace SankakuDownloader.Properties
 {
 
 

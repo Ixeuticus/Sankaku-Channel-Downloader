@@ -1,9 +1,9 @@
-﻿<Application x:Class="SankakuChannelDownloader.App"
+﻿<Application x:Class="SankakuDownloader.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SankakuChannelDownloader"
+             xmlns:local="clr-namespace:SankakuDownloader"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <local:MainViewModel x:Key="viewModel" />
     </Application.Resources>
 </Application>

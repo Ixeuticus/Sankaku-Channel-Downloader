@@ -1,10 +1,7 @@
-SankakuChannelAPI/SankakuChannelAPI/obj/Debug/TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs
-SankakuChannelAPI/SankakuChannelAPI/obj/
-SankakuChannelDownloader/SankakuChannelDownloader/obj/
-SankakuChannelDownloader/SankakuChannelDownloader/bin/Debug/save.data
-SankakuChannelDownloader/SankakuChannelDownloader/bin/Debug/cache.data
-SankakuChannelAPI/.vs/SankakuChannelAPI/v15/sqlite3/storage.ide
-SankakuChannelDownloader/SankakuChannelDownloader/bin/
-SankakuChannelDownloader/.vs/SankakuChannelDownloader/v15/
-SankakuChannelAPI/SankakuChannelAPI/bin/Release/SankakuChannelAPI.dll
-SankakuChannelAPI/SankakuChannelAPI/bin/
+
+SankakuDownloader/.vs/
+SankakuDownloader/SankakuAPI/bin/
+SankakuDownloader/SankakuAPI/obj/
+SankakuDownloader/SankakuDownloader/bin/
+SankakuDownloader/SankakuDownloader/obj/
+SankakuDownloader/packages
