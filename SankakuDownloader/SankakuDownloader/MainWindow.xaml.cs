@@ -1,6 +1,7 @@
 ﻿using SankakuAPI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,14 +21,7 @@ namespace SankakuDownloader
     {
         public MainWindow()
         {
-            InitializeComponent();
-          
-            test();
-        }
-
-        async void test()
-        {
-            var client = new SankakuChannelClient();
+            InitializeComponent();        
         }
     }
 }
