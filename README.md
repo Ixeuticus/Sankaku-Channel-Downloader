@@ -1,5 +1,6 @@
-# NO LONGER IN DEVELOPMENT
+## UPDATE: This app is will be built from scratch in the following months to fix all the issues.
 
+# NO LONGER IN DEVELOPMENT
 
 # Sankaku Channel Downloader
 An unofficial app designed to download big number of images off Sankaku Channel
