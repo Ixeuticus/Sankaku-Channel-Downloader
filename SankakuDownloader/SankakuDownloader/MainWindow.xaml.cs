@@ -125,8 +125,8 @@ namespace SankakuDownloader
         {
             if (ActiveViewModel.Logs.Count == 0) return;
 
-            _list.SelectedIndex = ActiveViewModel.Logs.Count - 1;
-            _list.ScrollIntoView(_list.SelectedItem);
+            var item = ActiveViewModel.Logs.LastOrDefault();
+            _list.ScrollIntoView(item);
         }
 
         #region MenuItem clicks

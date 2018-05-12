@@ -31,7 +31,7 @@
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding TimeStamp}" Margin="0,0,5,0" Foreground="#FF999999" FontFamily="Consolas" FontSize="14"  />
-                        <TextBlock Text="{Binding Message}" FontFamily="Consolas" FontSize="14">
+                        <TextBlock Text="{Binding Message}" FontFamily="Consolas" FontSize="14" >
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
