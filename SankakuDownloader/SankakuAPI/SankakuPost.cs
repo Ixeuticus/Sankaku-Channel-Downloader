@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -31,5 +32,15 @@ namespace SankakuAPI
         public long FileSize { get; set; }
         [JsonProperty("total_score")]
         public int Score { get; set; }
+        public string FileName
+        {
+            get
+            {
+                if (FileUrl == null) return null;
+                else if (FileUrl.Contains("?")) return Path.GetFileName(FileUrl.Substring(0, FileUrl.IndexOf('?')));
+                else return Path.GetFileName(FileUrl);
+            }
+        }
+        public double FileSizeMB => (FileSize / 1024.0) / 1024.0;
     }
 }

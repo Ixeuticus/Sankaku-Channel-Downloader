@@ -21,7 +21,7 @@ namespace SankakuDownloader
     {
         public MainWindow()
         {
-            InitializeComponent();        
+            InitializeComponent();
         }
     }
 }
