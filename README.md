@@ -1,4 +1,4 @@
-## UPDATE: This app is will be built from scratch in the following months to fix all the issues.
+## UPDATE: This app will be built from scratch in the following months to fix all the issues.
 
 # NO LONGER IN DEVELOPMENT
 
