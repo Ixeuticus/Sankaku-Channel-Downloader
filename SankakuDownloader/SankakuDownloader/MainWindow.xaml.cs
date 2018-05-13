@@ -102,6 +102,7 @@ namespace SankakuDownloader
                 btnStart.Content = "Stop";
                 ToggleState(false);
 
+                ActiveViewModel.SaveData(SaveFileLocation);
                 await ActiveViewModel.StartDownloading();
             }
             catch (Exception ex)

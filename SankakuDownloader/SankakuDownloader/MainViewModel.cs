@@ -23,6 +23,7 @@ namespace SankakuDownloader
         int spage = 1, limit = 50, maxdcount = 0, maxfs = 0, minsc = 0, minfc = 0;
         bool? skipvid, skipef = true;
         SynchronizationContext UIContext;
+        CancellationTokenSource csrc;
         #endregion
 
         #region Public Properties
@@ -63,8 +64,9 @@ namespace SankakuDownloader
         }
         public void LoadPasswordHash(string username, string phash) => Client = new SankakuChannelClient(username, phash);
         public async Task StartDownloading()
-        {
+        {           
             CurrentlyDownloading = true;
+            csrc = new CancellationTokenSource();
 
             try
             {
@@ -81,12 +83,12 @@ namespace SankakuDownloader
                     {
                         try
                         {
-                            if (CurrentlyDownloading == false) throw new CancelledException();
+                            csrc.Token.ThrowIfCancellationRequested();
 
                             // get pages
                             Log($"Searching on page {currentPage} in chunks of {Limit} posts per page.");
                             var posts = await Client.Search(Query.ToLower(), currentPage, Limit);
-                            if (CurrentlyDownloading == false) throw new CancelledException();
+                            csrc.Token.ThrowIfCancellationRequested();
 
                             Log($"Found {posts.Count} posts on page {currentPage}");
 
@@ -105,7 +107,7 @@ namespace SankakuDownloader
                             {
                                 dprogress++;
 
-                                if (CurrentlyDownloading == false) throw new CancelledException();
+                                csrc.Token.ThrowIfCancellationRequested();
                                 var targetDestination = Path.Combine(DownloadLocation, p.FileName);
 
                                 if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount)
@@ -176,8 +178,9 @@ namespace SankakuDownloader
                                     continue;
                                 }
 
+                                // download data
                                 var data = await Client.DownloadImage(p.FileUrl);
-                                if (CurrentlyDownloading == false) throw new CancelledException();
+                                csrc.Token.ThrowIfCancellationRequested();
 
                                 File.WriteAllBytes(targetDestination, data);
 
@@ -201,8 +204,8 @@ namespace SankakuDownloader
                             Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
 
                             if (waitingTime <= 60 * 60 * 1000) waitingTime += waitingTimeIncrement;
-                            await Task.Delay(waitingTime);
-                        }
+                            await Task.Delay(waitingTime, csrc.Token);
+                        }                       
                         catch 
                         {
                             throw;
@@ -210,14 +213,14 @@ namespace SankakuDownloader
                     }
 
                     Log("Task finished.");
-                });
+                }, csrc.Token);
             }
             catch (LimitReachedException)
             {
                 // ignore
                 CurrentlyDownloading = false;
             }
-            catch (CancelledException)
+            catch (OperationCanceledException)
             {
                 // ignore it
                 CurrentlyDownloading = false;
@@ -233,6 +236,8 @@ namespace SankakuDownloader
         public void StopDownloading()
         {
             Log("Stopping task...");
+
+            csrc?.Cancel();
             CurrentlyDownloading = false;
         }
         public void SaveData(string path)
@@ -343,6 +348,5 @@ namespace SankakuDownloader
     }
     #region Exceptions
     public class LimitReachedException : Exception { }
-    public class CancelledException : Exception { }
     #endregion
 }
