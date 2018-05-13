@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SankakuDownloader"
         mc:Ignorable="d" DataContext="{StaticResource viewModel}"
-        Title="Sankaku Downloader" Height="550" MinWidth="440" MinHeight="450" Width="541" Closing="Window_Closing">
+        Title="Sankaku Downloader" Height="600" MinWidth="530" MinHeight="450" Width="600" Closing="Window_Closing">
     <Window.Resources>
         <Style TargetType="MenuItem" x:Key="fileMenuItem">
             <Style.Triggers>
@@ -21,10 +21,10 @@
             <ColumnDefinition Width="231*"/>
         </Grid.ColumnDefinitions>
         <Grid Height="46" VerticalAlignment="Top" Background="#FFECECEC" Grid.ColumnSpan="2">
-            <TextBox x:Name="_username" Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="23" Margin="105,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169"/>
+            <TextBox x:Name="_username" Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="23" Margin="105,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="152"/>
             <Label Content="Authentication:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-            <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="279,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
-            <Label Content="(OPTIONAL)" HorizontalAlignment="Left" Margin="428,10,0,0" VerticalAlignment="Top" Foreground="#FF939393"/>
+            <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="262,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
+            <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click"/>
         </Grid>
         <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,278,10,46" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
@@ -97,5 +97,6 @@
         <TextBox x:Name="_minfavcount" Text="{Binding MinFavCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="118,228,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="10"/>
         <Button x:Name="btnStart" Content="Start Downloading" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="133" Height="25" Click="btnStart_Click"/>
+        <TextBlock x:Name="_loginStatus" HorizontalAlignment="Left" Margin="10,0,0,15" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="{Binding LoginStatus}"/>
     </Grid>
 </Window>

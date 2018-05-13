@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml;
 using System.Xml.Serialization;
 using SankakuAPI;
@@ -18,7 +19,7 @@ namespace SankakuDownloader
     public class MainViewModel : INotifyPropertyChanged
     {
         #region Private Fields
-        string username, query, blacklist, location;
+        string username, query, blacklist, location, loginstatus = "User is not logged in!";
         int spage = 1, limit = 50, maxdcount = 0, maxfs = 0, minsc = 0, minfc = 0;
         bool? skipvid, skipef = true;
         SynchronizationContext UIContext;
@@ -27,6 +28,7 @@ namespace SankakuDownloader
         #region Public Properties
         public string Username { get => username; set { username = value; Changed(); } }
         public string PasswordHash { get; set; }
+        public string LoginStatus { get => loginstatus; set { loginstatus = value; Changed(); } }
         public int StartingPage { get => spage; set { spage = value; Changed(); } }
         public int Limit { get => limit; set { limit = value; Changed(); } }
         public string Query { get => query; set { query = value; Changed(); } }
@@ -40,13 +42,27 @@ namespace SankakuDownloader
         public int MinFavCount { get => minfc; set { minfc = value; Changed(); } }
         public ObservableCollection<LogItem> Logs { get; set; } = new ObservableCollection<LogItem>();
         public bool CurrentlyDownloading { get; private set; } = false;
+
+        public SankakuChannelClient Client { get; private set; } = new SankakuChannelClient();
         #endregion
 
         public MainViewModel()
-        {
+        {          
             UIContext = SynchronizationContext.Current;
         }
-        public async Task StartDownloading(string password = null)
+        public async Task<bool> Login(string password)
+        {
+            var success = await this.Client.Login(Username, password);
+            if (success)
+            {
+                Username = Client.Username;
+                PasswordHash = Client.PasswordHash;
+                LoginStatus = $"Logged in as {Username}";                
+            }
+            return success;
+        }
+        public void LoadPasswordHash(string username, string phash) => Client = new SankakuChannelClient(username, phash);
+        public async Task StartDownloading()
         {
             CurrentlyDownloading = true;
 
@@ -54,17 +70,12 @@ namespace SankakuDownloader
             {
                 await Task.Run(async () =>
                 {
-                    // create client
-                    var useHash = !string.IsNullOrEmpty(PasswordHash);
-                    var client = new SankakuChannelClient(Username, useHash ? PasswordHash : password, useHash);
-                    PasswordHash = client.PasswordHash;
-
                     // start downloading
                     int downloadCount = 0;
                     int currentPage = StartingPage;
 
-                    int waitingTime = 0;
-                    int waitingTimeIncrement = 1000;
+                    int waitingTime = 2000;
+                    int waitingTimeIncrement = 2000;
 
                     while (true)
                     {
@@ -74,7 +85,7 @@ namespace SankakuDownloader
 
                             // get pages
                             Log($"Searching on page {currentPage} in chunks of {Limit} posts per page.");
-                            var posts = await client.Search(Query.ToLower(), currentPage, Limit);
+                            var posts = await Client.Search(Query.ToLower(), currentPage, Limit);
                             if (CurrentlyDownloading == false) throw new CancelledException();
 
                             Log($"Found {posts.Count} posts on page {currentPage}");
@@ -165,7 +176,7 @@ namespace SankakuDownloader
                                     continue;
                                 }
 
-                                var data = await client.DownloadImage(p.FileUrl);
+                                var data = await Client.DownloadImage(p.FileUrl);
                                 if (CurrentlyDownloading == false) throw new CancelledException();
 
                                 File.WriteAllBytes(targetDestination, data);
@@ -239,11 +250,11 @@ namespace SankakuDownloader
                     Limit = limit,
                     MinFavCount = minfc,
                     MinScore = minsc,
-                    PasswordHash = PasswordHash,
+                    PasswordHash = Client.PasswordHash,
                     SkipExistingFiles = skipef == true,
                     SkipVideoFiles = skipvid == true,
                     StartingPage = spage,
-                    Username = username
+                    Username = Client.Username
                 });
             }
         }
@@ -269,6 +280,13 @@ namespace SankakuDownloader
                 this.DownloadLocation = save.DownloadLocation;
                 this.MaxDownloadCount = save.MaxDownloadCount;
                 this.SkipExistingFiles = save.SkipExistingFiles;
+
+                if (string.IsNullOrEmpty(save.PasswordHash) == false && string.IsNullOrEmpty(Username) == false)
+                {
+                    LoadPasswordHash(Username, PasswordHash);
+                    LoginStatus = $"Logged in as {Username} (Loaded from settings)";
+                }
+                else LoginStatus = "User is not logged in!";               
             }
         }
 

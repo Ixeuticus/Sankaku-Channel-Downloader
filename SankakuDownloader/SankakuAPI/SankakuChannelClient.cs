@@ -18,50 +18,57 @@ namespace SankakuAPI
 
         #region Private Properties
         const string BaseURL = "https://capi-beta.sankakucomplex.com";
-        string AppKey { get; set; }
-        string Credentials => $"login={HttpUtility.UrlEncode(Username)}&password_hash={PasswordHash}&appkey={AppKey}";
-        HttpClient client; 
+        const string AppKey = "3467708e5b0c5e56dcad0676a45729861b944dd9";
+        string Credentials => PasswordHash == null ? "" : $"&login={HttpUtility.UrlEncode(Username)}&password_hash={PasswordHash}&appkey={AppKey}";
+        HttpClient client;
         #endregion
 
 
-        public SankakuChannelClient(string username, string password, bool hashWasGiven = false)
+        public SankakuChannelClient(string username = null, string passwordhash = null)
         {
             InitializeClient();
 
-            Username = username ?? "";
-            password = password ?? "";
-            PasswordHash = hashWasGiven ? password : sha1($"choujin-steiner--{password}--");
-            AppKey = sha1($"sankakuapp_{Username.ToLower()}_Z5NE9YASej");
+            Username = username;
+            PasswordHash = passwordhash;
         }
 
+        public async Task<bool> Login(string username, string password)
+        {
+            var response = await client.PostAsync("/user/authenticate.json", new FormUrlEncodedContent(new Dictionary<string, string>()
+            {
+                { "user[name]", username },
+                { "user[password]", password },
+                { "appkey" , AppKey }
+
+            }));
+            if (response.IsSuccessStatusCode == false) return false;
+
+            var content = await response.Content.ReadAsStringAsync();
+            var authresponse = JsonConvert.DeserializeObject<SankakuAuthResponse>(content);
+            PasswordHash = authresponse?.PasswordHash;
+            Username = authresponse?.CurrentUser?.Name;
+            return authresponse.Success;
+        }
         public async Task<List<SankakuPost>> Search(string query, int page = 1, int limit = 30)
         {
             if (page < 1) throw new NotSupportedException("Page count starts at 1");
             if (limit < 1) throw new NotSupportedException("Limit size must be at least 1");
 
             var tgs = HttpUtility.UrlEncode(query);
-            var response = await client.GetAsync($"/post/index.json?limit={limit}&page={page}&tags={tgs}&{Credentials}");
-            response.EnsureSuccessStatusCode();
+            var response = await client.GetAsync($"/post/index.json?limit={limit}&page={page}&tags={tgs}{Credentials}");
+            // response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
+            if (content.ToLower().Contains("anonymous users can only view")) throw new UnauthorizedAccessException("Sign in to view more pages!");
+            else if (response.IsSuccessStatusCode == false) throw new HttpRequestException(content);
+
             var posts = JsonConvert.DeserializeObject<List<SankakuPost>>(content);
 
-            return posts; 
+            return posts;
         }
 
         public async Task<byte[]> DownloadImage(string url) => await client.GetByteArrayAsync(url);
-        
-        string sha1(string text)
-        {
-            var hash = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(text));
 
-            string result = "";
-            foreach(var b in hash) result += int.Parse((
-                (b & 255) + 256).ToString(), NumberStyles.HexNumber)
-                .ToString().Substring(1);
-            
-            return result;
-        }
         void InitializeClient()
         {
             client = new HttpClient()

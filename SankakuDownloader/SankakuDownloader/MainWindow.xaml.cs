@@ -31,7 +31,7 @@ namespace SankakuDownloader
 
             try
             {
-                ActiveViewModel.LoadData(SaveFileLocation);
+                ActiveViewModel.LoadData(SaveFileLocation);              
             }
             catch
             {
@@ -66,6 +66,7 @@ namespace SankakuDownloader
             _tags.IsEnabled = state;
             _startingPage.IsEnabled = state;
             _minscore.IsEnabled = state;
+            btnLogin.IsEnabled = state;
         }
 
         async void btnStart_Click(object sender, RoutedEventArgs e)
@@ -101,7 +102,7 @@ namespace SankakuDownloader
                 btnStart.Content = "Stop";
                 ToggleState(false);
 
-                await ActiveViewModel.StartDownloading(_password.Password);
+                await ActiveViewModel.StartDownloading();
             }
             catch (Exception ex)
             {
@@ -154,7 +155,33 @@ namespace SankakuDownloader
         {
             var l = ((MenuItem)sender).DataContext as LogItem;
             Process.Start(System.IO.Path.GetDirectoryName(l.FullPath));
-        } 
+        }
         #endregion
+
+        async void btnLogin_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleState(false);
+            try
+            {
+                var result = await ActiveViewModel.Login(_password.Password);
+                if (result)
+                {
+                    ActiveViewModel.SaveData(SaveFileLocation);
+                    MessageBox.Show("Logged in successfully!", "Login success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Failed to log in!", "Login failure", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unknown error occured!\n\n" + ex.Message, "Login failure", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                ToggleState(true);
+            }
+        }
     }
 }
