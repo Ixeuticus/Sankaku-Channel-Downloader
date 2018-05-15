@@ -41,12 +41,15 @@ namespace SankakuAPI
                 { "appkey" , AppKey }
 
             }));
-            if (response.IsSuccessStatusCode == false) return false;
-
+           
             var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode == false) throw new LoginException(content);
+
             var authresponse = JsonConvert.DeserializeObject<SankakuAuthResponse>(content);
             PasswordHash = authresponse?.PasswordHash;
             Username = authresponse?.CurrentUser?.Name;
+
+            if (authresponse.Success == false) throw new LoginException(content);
             return authresponse.Success;
         }
         public async Task<List<SankakuPost>> Search(string query, int page = 1, int limit = 30)
@@ -80,5 +83,9 @@ namespace SankakuAPI
             client.DefaultRequestHeaders.Add("Origin", "https://beta.sankakucomplex.com");
             client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
+    }
+
+    public class LoginException : Exception {
+        public LoginException(string msg) : base(msg) { }
     }
 }

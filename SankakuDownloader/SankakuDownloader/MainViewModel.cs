@@ -202,12 +202,14 @@ namespace SankakuDownloader
 
                             // try again
                             Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
+                            Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");
 
                             if (waitingTime <= 60 * 60 * 1000) waitingTime += waitingTimeIncrement;
                             await Task.Delay(waitingTime, csrc.Token);
                         }                       
-                        catch 
+                        catch (Exception e)
                         {
+                            Logger.Log(e, "StartDownloading() exception -> ");
                             throw;
                         }
                     }

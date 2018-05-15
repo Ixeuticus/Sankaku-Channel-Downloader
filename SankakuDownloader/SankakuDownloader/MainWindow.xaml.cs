@@ -28,17 +28,23 @@ namespace SankakuDownloader
             InitializeComponent();
             ActiveViewModel = FindResource("viewModel") as MainViewModel;
             ActiveViewModel.Logs.CollectionChanged += Logs_CollectionChanged;
+            Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
 
             try
             {
                 ActiveViewModel.LoadData(SaveFileLocation);              
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("Failed to load previous settings!", "Failed to load settings", MessageBoxButton.OK, MessageBoxImage.Error);
+                Logger.Log(ex, "Failed to load settings -> ");
+                MessageBox.Show("Failed to load previous settings!\n" + ex.Message, "Failed to load settings", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private void Current_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show(e.Exception.Message, "Unhandled Exception!", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
 
         void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -107,7 +113,8 @@ namespace SankakuDownloader
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                Logger.Log(ex, "Download error -> ");
+                MessageBox.Show(ex.Message, "Download Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -175,8 +182,14 @@ namespace SankakuDownloader
                     MessageBox.Show("Failed to log in!", "Login failure", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
+            catch (LoginException lex)
+            {
+                Logger.Log(lex, "btnLogin_Click error -> ");
+                MessageBox.Show("Failed to log in!", "Login failure", MessageBoxButton.OK, MessageBoxImage.Warning);              
+            }
             catch (Exception ex)
             {
+                Logger.Log(ex, "btnLogin_Click unkown error -> ");
                 MessageBox.Show("Unknown error occured!\n\n" + ex.Message, "Login failure", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

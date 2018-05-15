@@ -24,7 +24,7 @@
             <TextBox x:Name="_username" Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="23" Margin="105,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="152"/>
             <Label Content="Authentication:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
             <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="262,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
-            <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click"/>
+            <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click" IsDefault="True"/>
         </Grid>
         <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,278,10,46" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
