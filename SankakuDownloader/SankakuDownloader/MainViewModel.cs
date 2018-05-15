@@ -49,14 +49,22 @@ namespace SankakuDownloader
         }
         public async Task<bool> Login(string password)
         {
-            var success = await this.Client.Login(Username, password);
-            if (success)
+            LoginStatus = "Logging in...";
+            try
             {
+                var success = await this.Client.Login(Username, password);
+
                 Username = Client.Username;
                 PasswordHash = Client.PasswordHash;
-                LoginStatus = $"Logged in as {Username}";                
+                LoginStatus = $"Logged in as {Username}";
+
+                return success;
             }
-            return success;
+            catch
+            {
+                LoginStatus = "Failed to log in.";
+                throw;
+            }
         }
         public void LoadPasswordHash(string username, string phash) => Client = new SankakuChannelClient(username, phash);
         public async Task StartDownloading()
