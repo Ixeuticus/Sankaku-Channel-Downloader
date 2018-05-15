@@ -18,7 +18,8 @@ namespace SankakuAPI
 
         #region Private Properties
         const string BaseURL = "https://capi-beta.sankakucomplex.com";
-        const string AppKey = "3467708e5b0c5e56dcad0676a45729861b944dd9";
+        string AppKey => sha1($"sankakuapp_{Username.ToLower()}_Z5NE9YASej");
+
         string Credentials => PasswordHash == null ? "" : $"&login={HttpUtility.UrlEncode(Username)}&password_hash={PasswordHash}&appkey={AppKey}";
         HttpClient client;
         #endregion
@@ -82,6 +83,19 @@ namespace SankakuAPI
             client.DefaultRequestHeaders.Add("Referer", "https://beta.sankakucomplex.com");
             client.DefaultRequestHeaders.Add("Origin", "https://beta.sankakucomplex.com");
             client.DefaultRequestHeaders.Add("Accept", "application/json");
+        }
+
+        public static string sha1(string name)
+        {
+            var hash = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(name));
+            string s = "";
+            foreach (var b in hash)
+            {
+                int u = (b & 255) + 256;
+                s += u.ToString("X").Substring(1);
+            }
+
+            return s.ToLower();
         }
     }
 
