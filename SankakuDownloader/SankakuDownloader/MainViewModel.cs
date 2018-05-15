@@ -206,7 +206,11 @@ namespace SankakuDownloader
 
                             if (waitingTime <= 60 * 60 * 1000) waitingTime += waitingTimeIncrement;
                             await Task.Delay(waitingTime, csrc.Token);
-                        }                       
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
                         catch (Exception e)
                         {
                             Logger.Log(e, "StartDownloading() exception -> ");
