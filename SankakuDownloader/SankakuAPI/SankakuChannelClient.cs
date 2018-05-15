@@ -18,7 +18,7 @@ namespace SankakuAPI
 
         #region Private Properties
         const string BaseURL = "https://capi-beta.sankakucomplex.com";
-        string AppKey => sha1($"sankakuapp_{Username.ToLower()}_Z5NE9YASej");
+        string AppKey { get; set; }
 
         string Credentials => PasswordHash == null ? "" : $"&login={HttpUtility.UrlEncode(Username)}&password_hash={PasswordHash}&appkey={AppKey}";
         HttpClient client;
@@ -35,9 +35,12 @@ namespace SankakuAPI
 
         public async Task<bool> Login(string username, string password)
         {
+            Username = username;
+            AppKey = sha1($"sankakuapp_{Username?.ToLower() ?? ""}_Z5NE9YASej");
+
             var response = await client.PostAsync("/user/authenticate.json", new FormUrlEncodedContent(new Dictionary<string, string>()
             {
-                { "user[name]", username },
+                { "user[name]", Username },
                 { "user[password]", password },
                 { "appkey" , AppKey }
 
@@ -60,7 +63,6 @@ namespace SankakuAPI
 
             var tgs = HttpUtility.UrlEncode(query);
             var response = await client.GetAsync($"/post/index.json?limit={limit}&page={page}&tags={tgs}{Credentials}");
-            // response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
             if (content.ToLower().Contains("anonymous users can only view")) throw new UnauthorizedAccessException("Sign in to view more pages!");

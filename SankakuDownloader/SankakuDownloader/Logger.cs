@@ -30,6 +30,7 @@ namespace SankakuDownloader
                 return m;
             }
             Log(msg);
+            // Log(msg + "\n" + ex.StackTrace);
         }
     }
 }
