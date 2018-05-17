@@ -154,13 +154,20 @@ namespace SankakuDownloader
                                 {
                                     // check blacklisted tags
                                     string[] blacklistedTags = blacklist.Split(' ').Select(x => x.ToLower()).ToArray();
+                                    bool isBlacklisted = false;
+
                                     foreach (var b in blacklistedTags) if (p.Tags.Count(x => x.Name.ToLower() == b) > 0)
                                         {
                                             // post contains blacklisted tag
                                             Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'", 
                                                 false, targetDestination, true);
+                                            isBlacklisted = true;
                                             continue;
                                         }
+                                    if (isBlacklisted)
+                                    {
+                                        continue;
+                                    }
                                 }
                                 if (SkipVideoFiles == true)
                                 {
