@@ -201,7 +201,6 @@ namespace SankakuDownloader
 
                             currentPage++;
                             waitingTime = 0;
-                            CurrentlyDownloading = false;
                             downloadCount += posts.Count;
                         }
                         catch (HttpRequestException ex)
@@ -230,6 +229,7 @@ namespace SankakuDownloader
                         }
                     }
 
+                    CurrentlyDownloading = false;
                     Log("Task finished.");
                 }, csrc.Token);
             }
