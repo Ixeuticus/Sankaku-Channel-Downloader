@@ -38,7 +38,11 @@ namespace SankakuDownloader
 
         void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            var f = new System.Windows.Forms.FolderBrowserDialog();
+            // right click should display the context menu
+            if (e.RightButton == MouseButtonState.Pressed) { e.Handled = true; return; }
+
+            // left click will display the folder browser dialog
+            var f = new System.Windows.Forms.FolderBrowserDialog();         
             
             if (f.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 ActiveViewModel.DownloadLocation = f.SelectedPath;            
@@ -114,12 +118,8 @@ namespace SankakuDownloader
             }
         }
 
-
-        void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            ActiveViewModel.SaveData(SaveFileLocation);
-        }
-
+        void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) => ActiveViewModel.SaveData(SaveFileLocation);
+        
         void Logs_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             if (ActiveViewModel.Logs.Count == 0) return;
@@ -186,6 +186,12 @@ namespace SankakuDownloader
             {
                 ToggleState(true);
             }
+        }
+
+        void OpenFolder(object sender, RoutedEventArgs e)
+        {
+            if (ActiveViewModel.IsPathSet() == false) return;
+            Process.Start(ActiveViewModel.DownloadLocation);
         }
     }
 }

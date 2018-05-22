@@ -76,7 +76,14 @@
         <TextBlock Text="Leave 0 for NO LIMIT" HorizontalAlignment="Left" Margin="189,194,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FFCFCFCF"/>
 
         <TextBlock Text="Download location:" HorizontalAlignment="Left" Margin="10,226,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBlock x:Name="_location" Text="{Binding DownloadLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MouseDown="TextBlock_MouseDown" HorizontalAlignment="Left" Margin="10,242,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FF999999"/>
+        <TextBlock x:Name="_location" Text="{Binding DownloadLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MouseDown="TextBlock_MouseDown" 
+                   HorizontalAlignment="Left" Margin="10,242,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FF999999">
+            <TextBlock.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open Folder" Click="OpenFolder" />
+                </ContextMenu>
+            </TextBlock.ContextMenu>
+        </TextBlock>
 
         <TextBlock Text="Starting page:" HorizontalAlignment="Left" Margin="10,157,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
         <TextBox x:Name="_startingPage" Text="{Binding StartingPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
