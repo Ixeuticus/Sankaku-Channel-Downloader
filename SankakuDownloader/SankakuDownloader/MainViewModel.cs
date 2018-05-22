@@ -95,12 +95,7 @@ namespace SankakuDownloader
                             csrc.Token.ThrowIfCancellationRequested();
 
                             Log($"Found {posts.Count} posts on page {currentPage}");
-
-                            if (posts.Count == 0)
-                            {
-                                // end reached
-                                break;
-                            }
+                            if (posts.Count == 0) break; // end reached
 
                             int downloaded = 0;
                             int dprogress = 0;
@@ -114,12 +109,7 @@ namespace SankakuDownloader
                                 csrc.Token.ThrowIfCancellationRequested();
                                 var targetDestination = Path.Combine(DownloadLocation, p.FileName);
 
-                                if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount)
-                                {
-                                    // limit reached
-                                    Log($"Limit reached. Downloaded {MaxDownloadCount} posts.");
-                                    throw new LimitReachedException();
-                                }
+                                if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount) throw new LimitReachedException();                              
                                 if (MaxFileSizeMB != 0 && p.FileSizeMB > MaxFileSizeMB)
                                 {
                                     // limit reached
@@ -134,8 +124,7 @@ namespace SankakuDownloader
                                     {
                                         // if size difference is less than 400 bytes - consider images to be the same
                                         Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - File exists", 
-                                            false, targetDestination, true);
-                                        continue;
+                                            false, targetDestination, true); continue;
                                     }
                                     else
                                     {
@@ -162,12 +151,10 @@ namespace SankakuDownloader
                                             Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'", 
                                                 false, targetDestination, true);
                                             isBlacklisted = true;
-                                            continue;
+                                            break;
                                         }
-                                    if (isBlacklisted)
-                                    {
-                                        continue;
-                                    }
+
+                                    if (isBlacklisted) continue;                                  
                                 }
                                 if (SkipVideoFiles == true)
                                 {
@@ -220,7 +207,11 @@ namespace SankakuDownloader
                         }
                         catch (OperationCanceledException)
                         {
-                            break;
+                            throw;
+                        }
+                        catch (LimitReachedException)
+                        {
+                            throw;
                         }
                         catch (Exception e)
                         {
@@ -237,6 +228,7 @@ namespace SankakuDownloader
             {
                 // ignore
                 CurrentlyDownloading = false;
+                Log($"Limit reached. Downloaded {MaxDownloadCount} posts.");
             }
             catch (OperationCanceledException)
             {
