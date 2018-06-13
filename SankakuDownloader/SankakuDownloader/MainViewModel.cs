@@ -108,24 +108,28 @@ namespace SankakuDownloader
                             Exception e = null;
                             if (ConcurrentDownloads == true)
                             {
-                                await Task.Run(() => Parallel.ForEach(posts,
-                                  new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
-                                     {
-                                         try { downloadPost(p).Wait(csrc.Token); }
-                                         catch (Exception ex) { e = ex; }
-                                     }));
+                                // concurrent downloading
+                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
+                                    {
+                                        try { downloadPost(p).Wait(csrc.Token); }
+                                        catch (Exception ex) { e = ex; }
+                                    });
 
                                 if (e != null) throw e;
                             }
-                            else foreach (var p in posts) await downloadPost(p);
+                            else foreach (var p in posts) await downloadPost(p);  // sequential downloading
 
+                            // local function for downloading a post
                             async Task downloadPost(SankakuPost p)
                             {
                                 int pr = 0;
+                                CancellationTokenSource oldcsrc = csrc;
+
                                 csrc.Token.ThrowIfCancellationRequested();
                                 var targetDestination = Path.Combine(DownloadLocation, p.FileName);
                                 if (Directory.Exists(DownloadLocation) == false) Directory.CreateDirectory(DownloadLocation);
 
+                                #region Check if File is to be downloaded
                                 if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount) throw new LimitReachedException();
                                 if (MaxFileSizeMB != 0 && p.FileSizeMB > MaxFileSizeMB)
                                 {
@@ -214,10 +218,13 @@ namespace SankakuDownloader
 
                                     return;
                                 }
+                                #endregion
 
                                 // download data
                                 var data = await Client.DownloadImage(p.FileUrl);
                                 csrc.Token.ThrowIfCancellationRequested();
+                                if (oldcsrc != csrc)
+                                    throw new OperationCanceledException("Token has changed!");
 
                                 File.WriteAllBytes(targetDestination, data);
 
