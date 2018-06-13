@@ -17,7 +17,7 @@ namespace SankakuDownloader
         #region Private Fields
         string username, query, blacklist, location, loginstatus = "User is not logged in!";
         int spage = 1, limit = 50, maxdcount = 0, maxfs = 0, minsc = 0, minfc = 0;
-        bool? skipvid, skipef = true;
+        bool? skipvid, cd = false, skipef = true;
         SynchronizationContext UIContext;
         CancellationTokenSource csrc;
         #endregion
@@ -34,6 +34,7 @@ namespace SankakuDownloader
         public int MaxFileSizeMB { get => maxfs; set { maxfs = value; Changed(); } }
         public bool? SkipExistingFiles { get => skipef != null ? skipef : false; set { skipef = value; Changed(); } }
         public bool? SkipVideoFiles { get => skipvid != null ? skipvid : false; set { skipvid = value; Changed(); } }
+        public bool? ConcurrentDownloads { get => cd; set { cd = value; Changed(); } }
         public string DownloadLocation { get => location ?? "Click here to set it!"; set { location = value; Changed(); } }
         public int MinScore { get => minsc; set { minsc = value; Changed(); } }
         public int MinFavCount { get => minfc; set { minfc = value; Changed(); } }
@@ -44,7 +45,7 @@ namespace SankakuDownloader
         #endregion
 
         public MainViewModel()
-        {          
+        {
             UIContext = SynchronizationContext.Current;
         }
         public async Task<bool> Login(string password)
@@ -68,7 +69,7 @@ namespace SankakuDownloader
         }
         public void LoadPasswordHash(string username, string phash) => Client = new SankakuChannelClient(username, phash);
         public async Task StartDownloading()
-        {           
+        {
             CurrentlyDownloading = true;
             csrc = new CancellationTokenSource();
 
@@ -97,34 +98,56 @@ namespace SankakuDownloader
                             Log($"Found {posts.Count} posts on page {currentPage}");
                             if (posts.Count == 0) break; // end reached
 
+                            object padlockp = new object(), padlockd = new object();
                             int downloaded = 0;
                             int dprogress = 0;
-                            string getProgress() => $"[{((dprogress / (double)posts.Count) * 100.0).ToString("0.00")}%]";
+                            string getProgress()
+                            {
+                                var p = 0;
+                                lock (padlockp) p = dprogress;
+                                return $"[{((p / (double)posts.Count) * 100.0).ToString("0.00")}%]";
+                            }
 
                             Log($"Downloading posts...");
-                            foreach (var p in posts)
-                            {
-                                dprogress++;
 
+                            Exception e = null;
+                            if (ConcurrentDownloads == true)
+                            {
+                                await Task.Run(() => Parallel.ForEach(posts,
+                                  new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
+                                     {
+                                         try { downloadPost(p).Wait(csrc.Token); }
+                                         catch (Exception ex) { e = ex; }
+                                     }));
+
+                                if (e != null) throw e;
+                            }
+                            else foreach (var p in posts) await downloadPost(p);
+
+                            async Task downloadPost(SankakuPost p)
+                            {
                                 csrc.Token.ThrowIfCancellationRequested();
                                 var targetDestination = Path.Combine(DownloadLocation, p.FileName);
+                                if (Directory.Exists(DownloadLocation) == false) Directory.CreateDirectory(DownloadLocation);
 
-                                if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount) throw new LimitReachedException();                              
+                                if (MaxDownloadCount != 0 && downloadCount + downloaded + 1 > MaxDownloadCount) throw new LimitReachedException();
                                 if (MaxFileSizeMB != 0 && p.FileSizeMB > MaxFileSizeMB)
                                 {
+                                    lock (padlockp) dprogress++;
                                     // limit reached
-                                    Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - File size limit exceeded", 
+                                    Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - File size limit exceeded",
                                         false, targetDestination, true);
-                                    continue;
+                                    return;
                                 }
                                 if (File.Exists(targetDestination))
                                 {
                                     // file with same filename exists - check size
                                     if (Math.Abs(new FileInfo(targetDestination).Length - p.FileSize) < 400 && SkipExistingFiles == true)
                                     {
+                                        lock (padlockp) dprogress++;
                                         // if size difference is less than 400 bytes - consider images to be the same
-                                        Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - File exists", 
-                                            false, targetDestination, true); continue;
+                                        Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - File exists",
+                                            false, targetDestination, true); return;
                                     }
                                     else
                                     {
@@ -147,14 +170,15 @@ namespace SankakuDownloader
 
                                     foreach (var b in blacklistedTags) if (p.Tags.Count(x => x.Name.ToLower() == b) > 0)
                                         {
+                                            lock (padlockp) dprogress++;
                                             // post contains blacklisted tag
-                                            Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'", 
+                                            Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'",
                                                 false, targetDestination, true);
                                             isBlacklisted = true;
                                             break;
                                         }
 
-                                    if (isBlacklisted) continue;                                  
+                                    if (isBlacklisted) return;
                                 }
                                 if (SkipVideoFiles == true)
                                 {
@@ -162,18 +186,20 @@ namespace SankakuDownloader
                                     var videoExtension = new string[] { "gif", "webm", "mp4", "avi", "flv", "swf" };
                                     if (videoExtension.Contains(ext))
                                     {
+                                        lock (padlockp) dprogress++;
                                         // is a video
-                                        Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Is video", 
+                                        Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Is video",
                                             false, targetDestination, true);
-                                        continue;
+                                        return;
                                     }
                                 }
                                 if (p.Score < MinScore || p.FavCount < MinFavCount)
                                 {
+                                    lock (padlockp) dprogress++;
                                     // post is below score/favcount limit
-                                    Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Score or Fav. Count is below limit", 
+                                    Log($"{getProgress()} Skipped '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB) - Score or Fav. Count is below limit",
                                         false, targetDestination, true);
-                                    continue;
+                                    return;
                                 }
 
                                 // download data
@@ -182,8 +208,9 @@ namespace SankakuDownloader
 
                                 File.WriteAllBytes(targetDestination, data);
 
+                                lock (padlockp) dprogress++;
+                                lock (padlockd) downloaded++;
                                 Log($"{getProgress()} Downloaded '{p.FileName}' ({p.FileSizeMB.ToString("0.00")} MB)", false, targetDestination);
-                                downloaded++;
                             }
 
                             currentPage++;
@@ -192,8 +219,9 @@ namespace SankakuDownloader
                         }
                         catch (HttpRequestException ex)
                         {
-                            string getTime() {
-                                if (waitingTime < 60 * 1000) return $"{Math.Round(waitingTime/1000.0, 2)} second/s";
+                            string getTime()
+                            {
+                                if (waitingTime < 60 * 1000) return $"{Math.Round(waitingTime / 1000.0, 2)} second/s";
                                 else if (waitingTime < 60 * 60 * 1000) return $"{Math.Round(waitingTime / (1000.0 * 60), 2)} minute/s";
                                 else return $"{Math.Round(waitingTime / (1000.0 * 60 * 60), 2)} hour/s";
                             }
@@ -269,7 +297,8 @@ namespace SankakuDownloader
                     SkipExistingFiles = skipef == true,
                     SkipVideoFiles = skipvid == true,
                     StartingPage = spage,
-                    Username = Client.Username
+                    Username = Client.Username,
+                    ConcurrentDownloads = ConcurrentDownloads == true
                 });
             }
         }
@@ -295,13 +324,14 @@ namespace SankakuDownloader
                 this.DownloadLocation = save.DownloadLocation;
                 this.MaxDownloadCount = save.MaxDownloadCount;
                 this.SkipExistingFiles = save.SkipExistingFiles;
+                this.ConcurrentDownloads = save.ConcurrentDownloads;
 
                 if (string.IsNullOrEmpty(save.PasswordHash) == false && string.IsNullOrEmpty(Username) == false)
                 {
                     LoadPasswordHash(Username, PasswordHash);
                     LoginStatus = $"Logged in as {Username} (Loaded from settings)";
                 }
-                else LoginStatus = "User is not logged in!";               
+                else LoginStatus = "User is not logged in!";
             }
         }
 
@@ -340,6 +370,7 @@ namespace SankakuDownloader
         public int MaxFileSizeMB { get; set; }
         public bool SkipExistingFiles { get; set; }
         public bool SkipVideoFiles { get; set; }
+        public bool ConcurrentDownloads { get; set; }
         public string DownloadLocation { get; set; }
         public int MinScore { get; set; }
         public int MinFavCount { get; set; }
