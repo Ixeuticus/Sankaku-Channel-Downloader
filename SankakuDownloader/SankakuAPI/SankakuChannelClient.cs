@@ -43,7 +43,6 @@ namespace SankakuAPI
                 { "user[name]", Username },
                 { "user[password]", password },
                 { "appkey" , AppKey }
-
             }));
            
             var content = await response.Content.ReadAsStringAsync();
@@ -69,7 +68,7 @@ namespace SankakuAPI
             else if (response.IsSuccessStatusCode == false) throw new HttpRequestException(content);
 
             var posts = JsonConvert.DeserializeObject<List<SankakuPost>>(content);
-
+            
             return posts;
         }
 

@@ -112,7 +112,7 @@ namespace SankakuDownloader
                                 Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
                                     {
                                         try { downloadPost(p).Wait(csrc.Token); }
-                                        catch (Exception ex) { e = ex; }
+                                        catch (Exception ex) { e = ex.InnerException ?? ex; }                                      
                                     });
 
                                 if (e != null) throw e;
@@ -242,6 +242,8 @@ namespace SankakuDownloader
                         }
                         catch (HttpRequestException ex)
                         {
+                            // this happens
+
                             string getTime()
                             {
                                 if (waitingTime < 60 * 1000) return $"{Math.Round(waitingTime / 1000.0, 2)} second/s";
@@ -266,7 +268,9 @@ namespace SankakuDownloader
                         }
                         catch (Exception e)
                         {
-                            Logger.Log(e, "StartDownloading() exception -> ");
+                            // this happens
+
+                            Logger.Log(e, "StartDownloading() exception -> "); 
                             throw;
                         }
                     }
@@ -360,7 +364,7 @@ namespace SankakuDownloader
 
         private void Log(string message, bool iserror = false, string filepath = null, bool minor = false)
         {
-            var timestamp = $"[{DateTime.Now.ToString("hh:mm:ss")}]";
+            var timestamp = $"[{DateTime.Now.ToString("HH:mm:ss")}]";
             var filename = filepath == null ? null : Path.GetFileName(filepath);
 
             UIContext.Post(a => Logs.Add(new LogItem()
