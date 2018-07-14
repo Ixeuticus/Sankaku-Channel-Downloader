@@ -107,6 +107,17 @@ namespace SankakuDownloader
                             // local function for getting progress text
                             string getProgress(int p) => $"[{((p / (double)posts.Count) * 100.0).ToString("0.00")}%]";
 
+                            // local function for getting first non-aggregate exception
+                            Exception ignoreAggregateExceptions(Exception exc)
+                            {
+                                Exception excc = exc;
+                                while (true)
+                                {
+                                    if (excc.InnerException == null || excc is AggregateException == false) return excc;
+                                    if (excc is AggregateException) excc = excc.InnerException;
+                                }
+                            }
+
                             // local function for downloading a post
                             async Task downloadPost(SankakuPost p)
                             {
@@ -209,7 +220,10 @@ namespace SankakuDownloader
                                 #endregion
 
                                 // download data
-                                var data = await Client.DownloadImage(p.FileUrl);
+                                var task = Client.DownloadImage(p.FileUrl);
+                                task.Wait(csrc.Token);
+                                var data = task.Result;
+
                                 csrc.Token.ThrowIfCancellationRequested();
                                 if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
 
@@ -243,10 +257,10 @@ namespace SankakuDownloader
                                         {
                                             lock (padlockp)
                                             {
-                                                e = aex.InnerException ?? aex;
+                                                e = ignoreAggregateExceptions(aex);
 
                                                 // task sometimes gets cancelled without ever requesting cancellation
-                                                if (e.Message == "A task was canceled") e = new HttpRequestException("Lost connection [0].");
+                                                if (e is TaskCanceledException) e = new HttpRequestException("Lost connection [0].");
                                             }
                                             parallelsrc.Cancel();
                                         }
@@ -272,12 +286,22 @@ namespace SankakuDownloader
                                 {
                                     // sequential downloading
                                     try { await downloadPost(p); }
-                                    catch (AggregateException aex)
+                                    catch(AggregateException aex)
                                     {
-                                        throw aex.InnerException ?? aex;
+                                        e = ignoreAggregateExceptions(aex);
+
+                                        // task sometimes gets cancelled without ever requesting cancellation
+                                        if (e is TaskCanceledException && csrc.IsCancellationRequested == false)
+                                            throw new HttpRequestException("Lost connection [0].");
+
+                                        throw e;
                                     }
-                                    catch (Exception)
+                                    catch (Exception ex)
                                     {
+                                        // task sometimes gets cancelled without ever requesting cancellation
+                                        if (ex is TaskCanceledException && csrc.IsCancellationRequested == false)
+                                            throw new HttpRequestException("Lost connection [0].");
+
                                         throw;
                                     }
                                 }
