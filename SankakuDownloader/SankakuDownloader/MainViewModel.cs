@@ -81,8 +81,10 @@ namespace SankakuDownloader
                     int downloadCount = 0;
                     int currentPage = StartingPage;
 
-                    int waitingTime = 2000;
+                    // variables for retrying when connection fails
+                    int waitingTime = 0;
                     int waitingTimeIncrement = 2000;
+                    int waitingTimeLimit = 60 * 60 * 1000;
 
                     while (true)
                     {
@@ -101,23 +103,9 @@ namespace SankakuDownloader
                             object padlockp = new object();
                             int downloaded = 0;
                             int dprogress = 0;
+
+                            // local function for getting progress text
                             string getProgress(int p) => $"[{((p / (double)posts.Count) * 100.0).ToString("0.00")}%]";
-
-                            Log($"Downloading posts...");
-
-                            Exception e = null;
-                            if (ConcurrentDownloads == true)
-                            {
-                                // concurrent downloading
-                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
-                                    {
-                                        try { downloadPost(p).Wait(csrc.Token); }
-                                        catch (Exception ex) { e = ex.InnerException ?? ex; }                                      
-                                    });
-
-                                if (e != null) throw e;
-                            }
-                            else foreach (var p in posts) await downloadPost(p);  // sequential downloading
 
                             // local function for downloading a post
                             async Task downloadPost(SankakuPost p)
@@ -236,14 +224,29 @@ namespace SankakuDownloader
                                 }
                             }
 
+                            // start downloading
+                            Log($"Downloading posts...");
+
+                            Exception e = null;
+                            if (ConcurrentDownloads == true)
+                            {
+                                // concurrent downloading
+                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
+                                    {
+                                        try { downloadPost(p).Wait(csrc.Token); }
+                                        catch (Exception ex) { e = ex.InnerException ?? ex; }
+                                    });
+
+                                if (e != null) throw e;
+                            }
+                            else foreach (var p in posts) await downloadPost(p);  // sequential downloading
+
                             currentPage++;
                             waitingTime = 0;
                             downloadCount += posts.Count;
                         }
                         catch (HttpRequestException ex)
                         {
-                            // this happens
-
                             string getTime()
                             {
                                 if (waitingTime < 60 * 1000) return $"{Math.Round(waitingTime / 1000.0, 2)} second/s";
@@ -251,11 +254,14 @@ namespace SankakuDownloader
                                 else return $"{Math.Round(waitingTime / (1000.0 * 60 * 60), 2)} hour/s";
                             }
 
-                            // try again
-                            Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
-                            Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");
+                            // increment waiting time unless limit reached
+                            if (waitingTime <= waitingTimeLimit) waitingTime += waitingTimeIncrement;
 
-                            if (waitingTime <= 60 * 60 * 1000) waitingTime += waitingTimeIncrement;
+                            // log
+                            Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
+                            Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");                     
+
+                            // wait
                             await Task.Delay(waitingTime, csrc.Token);
                         }
                         catch (OperationCanceledException)
@@ -268,9 +274,7 @@ namespace SankakuDownloader
                         }
                         catch (Exception e)
                         {
-                            // this happens
-
-                            Logger.Log(e, "StartDownloading() exception -> "); 
+                            Logger.Log(e, "StartDownloading() exception -> ");
                             throw;
                         }
                     }
