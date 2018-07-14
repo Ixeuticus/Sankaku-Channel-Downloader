@@ -211,8 +211,7 @@ namespace SankakuDownloader
                                 // download data
                                 var data = await Client.DownloadImage(p.FileUrl);
                                 csrc.Token.ThrowIfCancellationRequested();
-                                if (oldcsrc != csrc)
-                                    throw new OperationCanceledException("Token has changed!");
+                                if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
 
                                 File.WriteAllBytes(targetDestination, data);
 
@@ -231,15 +230,58 @@ namespace SankakuDownloader
                             if (ConcurrentDownloads == true)
                             {
                                 // concurrent downloading
-                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
+                                CancellationTokenSource parallelsrc = new CancellationTokenSource();
+                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, (p, state) =>
                                     {
-                                        try { downloadPost(p).Wait(csrc.Token); }
-                                        catch (Exception ex) { e = ex.InnerException ?? ex; }
+                                        try
+                                        {
+                                            // only start downloading if parallelsrc is not cancelled
+                                            if (parallelsrc.IsCancellationRequested == false)
+                                                downloadPost(p).Wait(parallelsrc.Token);
+                                        }
+                                        catch (AggregateException aex)
+                                        {
+                                            lock (padlockp)
+                                            {
+                                                e = aex.InnerException ?? aex;
+
+                                                // task sometimes gets cancelled without ever requesting cancellation
+                                                if (e.Message == "A task was canceled") e = new HttpRequestException("Lost connection [0].");
+                                            }
+                                            parallelsrc.Cancel();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            lock (padlockp)
+                                            {
+                                                // cancel entire task if csrc is cancelled
+                                                if (csrc.IsCancellationRequested) e = ex;
+                                                // cancel only this loop if parallelsrc is cancelled
+                                                else if (parallelsrc.IsCancellationRequested) e = new HttpRequestException("Lost connection [1].");
+                                                // unknown error
+                                                else e = ex;
+                                            }
+
+                                            if (parallelsrc.IsCancellationRequested == false) parallelsrc.Cancel();
+                                        }
                                     });
 
                                 if (e != null) throw e;
                             }
-                            else foreach (var p in posts) await downloadPost(p);  // sequential downloading
+                            else foreach (var p in posts)
+                                {
+                                    // sequential downloading
+                                    try { await downloadPost(p); }
+                                    catch (AggregateException aex)
+                                    {
+                                        throw aex.InnerException ?? aex;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        throw;
+                                    }
+                                }
+
 
                             currentPage++;
                             waitingTime = 0;
@@ -259,7 +301,7 @@ namespace SankakuDownloader
 
                             // log
                             Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
-                            Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");                     
+                            Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");
 
                             // wait
                             await Task.Delay(waitingTime, csrc.Token);
