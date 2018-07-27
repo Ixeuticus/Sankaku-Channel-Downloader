@@ -32,6 +32,7 @@ namespace SankakuAPI
         public long FileSize { get; set; }
         [JsonProperty("total_score")]
         public int Score { get; set; }
+        public long ActualFileSize { get; set; }
         [JsonProperty("tags")]
         public List<SankakuTag> Tags { get; set; }
         public string FileName
@@ -43,7 +44,9 @@ namespace SankakuAPI
                 else return Path.GetFileName(FileUrl);
             }
         }
+
         public double FileSizeMB => (FileSize / 1024.0) / 1024.0;
+        public double ActualFileSizeMB => (ActualFileSize / 1024.0) / 1024.0;
     }
 
     public class SankakuTag

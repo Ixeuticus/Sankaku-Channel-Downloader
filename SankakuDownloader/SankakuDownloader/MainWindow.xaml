@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SankakuDownloader"
         mc:Ignorable="d" DataContext="{StaticResource viewModel}"
-        Title="Sankaku Downloader" Height="600" MinWidth="580" MinHeight="450" Width="600" Closing="Window_Closing">
+        Title="Sankaku Downloader" Height="600" MinWidth="600" MinHeight="450" Width="600" Closing="Window_Closing">
     <Window.Resources>
         <Style TargetType="MenuItem" x:Key="fileMenuItem">
             <Style.Triggers>
@@ -107,5 +107,6 @@
         <TextBlock x:Name="_loginStatus" HorizontalAlignment="Left" Margin="10,0,0,15" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="{Binding LoginStatus}"/>
         <CheckBox Content="Concurrent Downloads" HorizontalAlignment="Right" Margin="0,0,162,15" x:Name="_checkboxConcurrent"
                   VerticalAlignment="Bottom" Grid.ColumnSpan="2" IsChecked="{Binding ConcurrentDownloads, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <CheckBox x:Name="_checkResizedOnly" Content="Resized Only" IsChecked="{Binding ResizedOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="133,108,-5,0" VerticalAlignment="Top" TabIndex="5"/>
     </Grid>
 </Window>

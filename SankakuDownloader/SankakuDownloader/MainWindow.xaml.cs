@@ -67,6 +67,7 @@ namespace SankakuDownloader
             _startingPage.IsEnabled = state;
             _minscore.IsEnabled = state;
             _checkboxConcurrent.IsEnabled = state;
+            _checkResizedOnly.IsEnabled = state;
             btnLogin.IsEnabled = state;
         }
 
