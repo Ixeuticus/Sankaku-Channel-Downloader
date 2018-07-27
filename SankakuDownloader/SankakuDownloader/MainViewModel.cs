@@ -82,8 +82,10 @@ namespace SankakuDownloader
                     int downloadCount = 0;
                     int currentPage = StartingPage;
 
-                    int waitingTime = 2000;
+                    // variables for retrying when connection fails
+                    int waitingTime = 0;
                     int waitingTimeIncrement = 2000;
+                    int waitingTimeLimit = 60 * 60 * 1000;
 
                     while (true)
                     {
@@ -102,23 +104,20 @@ namespace SankakuDownloader
                             object padlockp = new object();
                             int downloaded = 0;
                             int dprogress = 0;
+
+                            // local function for getting progress text
                             string getProgress(int p) => $"[{((p / (double)posts.Count) * 100.0).ToString("0.00")}%]";
 
-                            Log($"Downloading posts...");
-
-                            Exception e = null;
-                            if (ConcurrentDownloads == true)
+                            // local function for getting first non-aggregate exception
+                            Exception ignoreAggregateExceptions(Exception exc)
                             {
-                                // concurrent downloading
-                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, p =>
-                                    {
-                                        try { downloadPost(p).Wait(csrc.Token); }
-                                        catch (Exception ex) { e = ex; }
-                                    });
-
-                                if (e != null) throw e;
+                                Exception excc = exc;
+                                while (true)
+                                {
+                                    if (excc.InnerException == null || excc is AggregateException == false) return excc;
+                                    if (excc is AggregateException) excc = excc.InnerException;
+                                }
                             }
-                            else foreach (var p in posts) await downloadPost(p);  // sequential downloading
 
                             // local function for downloading a post
                             async Task downloadPost(SankakuPost p)
@@ -224,8 +223,10 @@ namespace SankakuDownloader
                                 #region Download File
                                 // download data
                                 bool useSample = ResizedOnly == true && !string.IsNullOrEmpty(p.SampleUrl);
-                                var data = await Client.DownloadImage(useSample ? p.SampleUrl : p.FileUrl);
-
+                                var task = Client.DownloadImage(useSample ? p.SampleUrl : p.FileUrl);
+                                task.Wait(csrc.Token);
+                                var data = task.Result;
+                                
                                 csrc.Token.ThrowIfCancellationRequested();
                                 if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
 
@@ -241,6 +242,76 @@ namespace SankakuDownloader
                                 }
                             }
 
+                            // start downloading
+                            Log($"Downloading posts...");
+
+                            Exception e = null;
+                            if (ConcurrentDownloads == true)
+                            {
+                                // concurrent downloading
+                                CancellationTokenSource parallelsrc = new CancellationTokenSource();
+                                Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, (p, state) =>
+                                    {
+                                        try
+                                        {
+                                            // only start downloading if parallelsrc is not cancelled
+                                            if (parallelsrc.IsCancellationRequested == false)
+                                                downloadPost(p).Wait(parallelsrc.Token);
+                                        }
+                                        catch (AggregateException aex)
+                                        {
+                                            lock (padlockp)
+                                            {
+                                                e = ignoreAggregateExceptions(aex);
+
+                                                // task sometimes gets cancelled without ever requesting cancellation
+                                                if (e is TaskCanceledException) e = new HttpRequestException("Lost connection [0].");
+                                            }
+                                            parallelsrc.Cancel();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            lock (padlockp)
+                                            {
+                                                // cancel entire task if csrc is cancelled
+                                                if (csrc.IsCancellationRequested) e = ex;
+                                                // cancel only this loop if parallelsrc is cancelled
+                                                else if (parallelsrc.IsCancellationRequested) e = new HttpRequestException("Lost connection [1].");
+                                                // unknown error
+                                                else e = ex;
+                                            }
+
+                                            if (parallelsrc.IsCancellationRequested == false) parallelsrc.Cancel();
+                                        }
+                                    });
+
+                                if (e != null) throw e;
+                            }
+                            else foreach (var p in posts)
+                                {
+                                    // sequential downloading
+                                    try { await downloadPost(p); }
+                                    catch(AggregateException aex)
+                                    {
+                                        e = ignoreAggregateExceptions(aex);
+
+                                        // task sometimes gets cancelled without ever requesting cancellation
+                                        if (e is TaskCanceledException && csrc.IsCancellationRequested == false)
+                                            throw new HttpRequestException("Lost connection [0].");
+
+                                        throw e;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // task sometimes gets cancelled without ever requesting cancellation
+                                        if (ex is TaskCanceledException && csrc.IsCancellationRequested == false)
+                                            throw new HttpRequestException("Lost connection [0].");
+
+                                        throw;
+                                    }
+                                }
+
+
                             currentPage++;
                             waitingTime = 0;
                             downloadCount += posts.Count;
@@ -254,11 +325,14 @@ namespace SankakuDownloader
                                 else return $"{Math.Round(waitingTime / (1000.0 * 60 * 60), 2)} hour/s";
                             }
 
-                            // try again
+                            // increment waiting time unless limit reached
+                            if (waitingTime <= waitingTimeLimit) waitingTime += waitingTimeIncrement;
+
+                            // log
                             Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
                             Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");
 
-                            if (waitingTime <= 60 * 60 * 1000) waitingTime += waitingTimeIncrement;
+                            // wait
                             await Task.Delay(waitingTime, csrc.Token);
                         }
                         catch (OperationCanceledException)
@@ -367,7 +441,7 @@ namespace SankakuDownloader
 
         private void Log(string message, bool iserror = false, string filepath = null, bool minor = false)
         {
-            var timestamp = $"[{DateTime.Now.ToString("hh:mm:ss")}]";
+            var timestamp = $"[{DateTime.Now.ToString("HH:mm:ss")}]";
             var filename = filepath == null ? null : Path.GetFileName(filepath);
 
             UIContext.Post(a => Logs.Add(new LogItem()
