@@ -3,6 +3,21 @@ An unofficial app designed to download big number of images off Sankaku Channel
 
 It has now been overhauled and made from scratch with the new Sankaku Channel API that is currently in beta.
 
+## Features
+- Login to remove download limit
+- Search using multiple tags
+- **Blacklist** multiple tags
+- Set **limit for max. downloaded posts**
+- Set **limit for max. file size**
+- **Skip existing files**
+- **Skip video files**
+- Skip posts with **score below defined min**.
+- Skip posts with **fav. count below defined min**.
+- Only download **resized images** if available
+- Set starting page for searching
+- Set posts per page for searching
+- Option to use **Concurrent downloading**
+
 ## Usage
 Authentication is now **optional**. You no longer need to enter your username and password to find posts **UP TO PAGE 25**. For posts above page 25, you will need to log in.
 
