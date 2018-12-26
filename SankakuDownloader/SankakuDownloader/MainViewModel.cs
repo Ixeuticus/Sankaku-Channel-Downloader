@@ -223,14 +223,13 @@ namespace SankakuDownloader
                                 #region Download File
                                 // download data
                                 bool useSample = ResizedOnly == true && !string.IsNullOrEmpty(p.SampleUrl);
-                                var task = Client.DownloadImage(useSample ? p.SampleUrl : p.FileUrl);
+                                var url = useSample ? p.SampleUrl : p.FileUrl;
+
+                                var task = Client.DownloadImage(url, targetDestination);
                                 task.Wait(csrc.Token);
-                                var data = task.Result;
                                 
                                 csrc.Token.ThrowIfCancellationRequested();
-                                if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
-
-                                File.WriteAllBytes(targetDestination, data); 
+                                if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!"); 
                                 #endregion
 
                                 lock (padlockp)

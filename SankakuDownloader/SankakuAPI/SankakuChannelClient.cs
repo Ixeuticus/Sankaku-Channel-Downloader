@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -73,6 +74,11 @@ namespace SankakuAPI
         }
 
         public async Task<byte[]> DownloadImage(string url) => await client.GetByteArrayAsync(url);
+        public async Task DownloadImage(string url, string destinationFilename)
+        {
+            using (var fstr = new FileStream(destinationFilename, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var str = await client.GetStreamAsync(url)) await str.CopyToAsync(fstr);          
+        }
 
         void InitializeClient()
         {
