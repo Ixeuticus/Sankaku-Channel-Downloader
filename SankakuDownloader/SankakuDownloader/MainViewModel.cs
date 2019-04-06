@@ -240,7 +240,25 @@ namespace SankakuDownloader
                                     bool useSample = CurrentJob.ResizedOnly == true && !string.IsNullOrEmpty(p.SampleUrl);
                                     var url = useSample ? p.SampleUrl : p.FileUrl;
 
-                                    await Client.DownloadImage(url, targetDestination, csrc.Token).ConfigureAwait(false);                                   
+                                    // add status log that will show progress
+                                    LogItem log = new LogItem()
+                                    {
+                                        TimeStamp = $"[{DateTime.Now.ToString("HH:mm:ss")}]",
+                                        FullPath = targetDestination,
+                                        FileName = Path.GetFileName(targetDestination),
+                                        IsError = false,
+                                        Message = $"Downloading '{fname}' [0.00%]"
+                                    };
+                                    Action<long> prg = l =>
+                                    {
+                                        var progress = ((double)l / p.FileSize) * 100;
+                                        log.Message = $"{getProgress(pr)} Downloading '{Path.GetFileName(targetDestination)}' " +
+                                                      $"({p.ActualFileSizeMB.ToString("0.00")} MB) [{progress.ToString("0.00")}%]";
+                                    };
+                                    Log(log);
+
+                                    // DOWNLOAD IMAGE
+                                    await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);                                   
 
                                     if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
                                     #endregion
@@ -251,7 +269,10 @@ namespace SankakuDownloader
                                         pr = ++dprogress;
                                         downloaded++;
                                         p.ActualFileSize = new FileInfo(targetDestination).Length;
-                                        Log($"{getProgress(pr)} Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)", false, targetDestination);
+                                        log.Message = $"{getProgress(pr)} Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)";
+                                        /*
+                                        Log($"{getProgress(pr)} Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)", 
+                                            false, targetDestination);*/
                                     }
                                 }
 
@@ -323,7 +344,6 @@ namespace SankakuDownloader
                                             throw;
                                         }
                                     }
-
 
                                 currentPage++;
                                 waitingTime = 0;
@@ -467,12 +487,14 @@ namespace SankakuDownloader
             CurrentJob = new JobConfiguration(CurrentJob);
         }
 
+        private void Log(LogItem item) => UIContext.Post(a => Logs.Add(item), null);
+        
         private void Log(string message, bool iserror = false, string filepath = null, bool minor = false)
         {
             var timestamp = $"[{DateTime.Now.ToString("HH:mm:ss")}]";
             var filename = filepath == null ? null : Path.GetFileName(filepath);
 
-            UIContext.Post(a => Logs.Add(new LogItem()
+            Log(new LogItem()
             {
                 TimeStamp = timestamp,
                 Message = message,
@@ -480,7 +502,7 @@ namespace SankakuDownloader
                 FileName = filename ?? "",
                 FullPath = filepath ?? "",
                 IsMinor = minor
-            }), null);
+            });
         }
 
         public bool IsPathSet() => CurrentJob.IsPathSet();
@@ -513,16 +535,24 @@ namespace SankakuDownloader
         public bool SkipPreviousFiles { get; set; }
     }
 
-    public class LogItem
+    public class LogItem : INotifyPropertyChanged
     {
+        string msg;
+
         public bool IsError { get; set; }
         public bool IsMinor { get; set; }
-        public string Message { get; set; }
+        public string Message { get => msg; set { msg = value; Changed(); } }
         public string TimeStamp { get; set; }
         public string FileSize { get; set; }
         public string FileName { get; set; }
         public string FullPath { get; set; }
         public bool IsFile => !string.IsNullOrEmpty(FullPath) && File.Exists(FullPath);
+
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void Changed([CallerMemberName]string name = "")
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     public class JobConfiguration : INotifyPropertyChanged

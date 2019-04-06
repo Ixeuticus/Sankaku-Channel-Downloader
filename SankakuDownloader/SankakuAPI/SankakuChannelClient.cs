@@ -90,6 +90,21 @@ namespace SankakuAPI
             }
         }
 
+        public async Task DownloadImage(string url, string destinationFilename, Action<long> progress, CancellationToken token)
+        {
+            try
+            {
+                using (var fstr = new FileStream(destinationFilename, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var str = await client.GetStreamAsync(url).ConfigureAwait(false))
+                    await CopyToWithProgressAsync(str, fstr, token, 81920, progress).ConfigureAwait(false);
+            }
+            catch
+            {
+                if (File.Exists(destinationFilename)) File.Delete(destinationFilename);
+                throw;
+            }
+        }
+
         void InitializeClient()
         {
             client = new HttpClient()
@@ -113,6 +128,27 @@ namespace SankakuAPI
             }
 
             return s.ToLower();
+        }
+
+        public static async Task CopyToWithProgressAsync(Stream source, Stream destination,
+            CancellationToken token, int bufferSize = 81920, Action<long> progress = null)
+        {
+            var buffer = new byte[bufferSize];
+            var total = 0L;
+            int amtRead;
+            do
+            {
+                amtRead = 0;
+                while (amtRead < bufferSize)
+                {
+                    var numBytes = await source.ReadAsync(buffer, amtRead, bufferSize - amtRead, token);
+                    if (numBytes == 0) break;
+                    amtRead += numBytes;
+                }
+                total += amtRead;
+                await destination.WriteAsync(buffer, 0, amtRead, token);
+                progress?.Invoke(total);
+            } while (amtRead == bufferSize);
         }
     }
 
