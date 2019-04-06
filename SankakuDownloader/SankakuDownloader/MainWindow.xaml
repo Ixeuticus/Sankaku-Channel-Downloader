@@ -26,7 +26,7 @@
             <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="262,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
             <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click" IsDefault="True"/>
         </Grid>
-        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,338,10,80" Grid.ColumnSpan="2">
+        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,338,10,85" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" VirtualizingPanel.VirtualizationMode="Standard">
@@ -104,9 +104,8 @@
         <TextBox x:Name="_minfavcount" Text="{Binding CurrentJob.MinFavCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="118,228,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="10"/>
         <Button x:Name="btnStart" Content="Start Downloading" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="133" Height="25" Click="btnStart_Click"/>
-        <TextBlock x:Name="_loginStatus" HorizontalAlignment="Left" Margin="10,0,0,15" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="{Binding LoginStatus}"/>
-        <CheckBox Content="Concurrent Downloads" HorizontalAlignment="Right" Margin="0,0,162,15" x:Name="_checkboxConcurrent"
-                  VerticalAlignment="Bottom" Grid.ColumnSpan="2" IsChecked="{Binding ConcurrentDownloads, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBlock x:Name="_loginStatus" HorizontalAlignment="Left" Margin="10,0,0,10" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="{Binding LoginStatus}"/>
+
         <CheckBox x:Name="_checkResizedOnly" Content="Resized Only" IsChecked="{Binding CurrentJob.ResizedOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="133,108,-5,0" VerticalAlignment="Top" TabIndex="5"/>
         <Button x:Name="btnEnqueue" Content="Add to Queue" Margin="0,0,10,50" VerticalAlignment="Bottom" Height="25" Click="BtnEnqueue_Click" Grid.Column="1" HorizontalAlignment="Right" Width="113"/>
         <Button x:Name="btnViewQueue" Content="View Queue" HorizontalAlignment="Right" Margin="0,0,126,50" VerticalAlignment="Bottom" Width="113" Height="25" Click="BtnViewQueue_Click" Grid.Column="1"/>
@@ -131,5 +130,13 @@
             <Run Text="Example:"  />
             <Run Text="{Binding CurrentJob.NamingExample,Mode=OneWay}" Foreground="#FF535353" />
         </TextBlock>
+
+        <Canvas HorizontalAlignment="Right" Height="51" Margin="0,0,10,34" VerticalAlignment="Bottom" Width="181" Background="#FFEEEEEE">
+            <CheckBox Content="Concurrent downloading" HorizontalAlignment="Right" x:Name="_checkboxConcurrent"
+                  VerticalAlignment="Bottom" IsChecked="{Binding ConcurrentDownloads, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Canvas.Left="10" Canvas.Top="6"/>
+
+            <Slider x:Name="_concurrencySlider" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="158" AutoToolTipPlacement="BottomRight" 
+                Minimum="2" Maximum="5" Value="{Binding Concurrency}" Canvas.Left="10" Canvas.Top="26"/>
+        </Canvas>
     </Grid>
 </Window>

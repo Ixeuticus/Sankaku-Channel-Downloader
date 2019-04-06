@@ -69,6 +69,7 @@ namespace SankakuDownloader
             _checkboxConcurrent.IsEnabled = state;
             _checkResizedOnly.IsEnabled = state;
             _checkPreviousDownloaded.IsEnabled = state;
+            _concurrencySlider.IsEnabled = state;
             _namingFormat.IsEnabled = state;
             btnEnqueue.IsEnabled = state;
             btnLogin.IsEnabled = state;

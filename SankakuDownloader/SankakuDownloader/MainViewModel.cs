@@ -19,6 +19,7 @@ namespace SankakuDownloader
     {
         #region Private Fields
         string username, loginstatus = "User is not logged in!";
+        int concurrency = 2;
         bool? cd = false;
 
         SynchronizationContext UIContext;
@@ -38,6 +39,7 @@ namespace SankakuDownloader
         public event EventHandler<bool> JobsCollectionChanged;
         public int JobsRemaining => Jobs.Count;
 
+        public int Concurrency { get => concurrency; set { concurrency = value; Changed(); } }
         public bool? ConcurrentDownloads { get => cd; set { cd = value; Changed(); } }
         public ObservableCollection<LogItem> Logs { get; set; } = new ObservableCollection<LogItem>();
         public bool CurrentlyDownloading { get; private set; } = false;
@@ -292,7 +294,7 @@ namespace SankakuDownloader
                                 {
                                     // concurrent downloading
                                     CancellationTokenSource parallelsrc = CancellationTokenSource.CreateLinkedTokenSource(csrc.Token);
-                                    Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, (p, state) =>
+                                    Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = Concurrency }, (p, state) =>
                                     {
                                         try
                                         {
@@ -443,6 +445,7 @@ namespace SankakuDownloader
                 save.Username = Client.Username;
                 save.PasswordHash = Client.PasswordHash;
                 save.ConcurrentDownloads = ConcurrentDownloads == true;
+                save.Concurrency = Concurrency;
 
                 serializer.Serialize(writer, save);
             }
@@ -462,6 +465,7 @@ namespace SankakuDownloader
                 PasswordHash = save.PasswordHash;
                 CurrentJob.Query = save.Query;
                 CurrentJob.Limit = save.Limit;
+                Concurrency = save.Concurrency;
                 ConcurrentDownloads = save.ConcurrentDownloads;
                 CurrentJob.MinScore = save.MinScore;
                 CurrentJob.Blacklist = save.Blacklist;
@@ -541,6 +545,7 @@ namespace SankakuDownloader
         public int MinFavCount { get; set; }
         public string NamingFormat { get; set; }
         public bool SkipPreviousFiles { get; set; }
+        public int Concurrency { get; set; }
     }
 
     public class LogItem : INotifyPropertyChanged
