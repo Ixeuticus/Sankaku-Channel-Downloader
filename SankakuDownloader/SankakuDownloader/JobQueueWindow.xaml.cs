@@ -27,6 +27,12 @@ namespace SankakuDownloader
 
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
+            if (MainWindow.ActiveViewModel.CurrentlyDownloading)
+            {
+                MessageBox.Show("Can't remove jobs while downloading!", "Can't remove", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             var items = list.SelectedItems.Cast<JobConfiguration>().ToList();
             MainWindow.ActiveViewModel.Jobs = new Queue<JobConfiguration>(MainWindow.ActiveViewModel.Jobs.Where(x => !items.Contains(x)));
         }

@@ -29,7 +29,7 @@
         <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,338,10,80" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal" VirtualizingPanel.VirtualizationMode="Standard">
                         <TextBlock Text="{Binding TimeStamp}" Margin="0,0,5,0" Foreground="#FF999999" FontFamily="Consolas" FontSize="14"  />
                         <TextBlock Text="{Binding Message}" FontFamily="Consolas" FontSize="14" >
                             <TextBlock.Style>
