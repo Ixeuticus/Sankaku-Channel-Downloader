@@ -45,7 +45,7 @@ namespace SankakuDownloader
             var f = new System.Windows.Forms.FolderBrowserDialog();         
             
             if (f.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                ActiveViewModel.DownloadLocation = f.SelectedPath;            
+                ActiveViewModel.CurrentJob.DownloadLocation = f.SelectedPath;            
         }
 
         new void GotFocus(object sender, RoutedEventArgs e) => ((TextBox)sender).SelectAll();
@@ -68,6 +68,9 @@ namespace SankakuDownloader
             _minscore.IsEnabled = state;
             _checkboxConcurrent.IsEnabled = state;
             _checkResizedOnly.IsEnabled = state;
+            _checkPreviousDownloaded.IsEnabled = state;
+            _namingFormat.IsEnabled = state;
+            btnEnqueue.IsEnabled = state;
             btnLogin.IsEnabled = state;
         }
 
@@ -81,20 +84,10 @@ namespace SankakuDownloader
                 return;
             }
 
-
-            // check download location
-            if (ActiveViewModel.IsPathSet() == false)
+            // check if queue has jobs
+            if (ActiveViewModel.Jobs.Count == 0)
             {
-                MessageBox.Show("Please set the download location!", "Missing download location!",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // check query
-            if (ActiveViewModel.Query == null || ActiveViewModel.Query?.Length == 0)
-            {
-                MessageBox.Show("Please specify some tags!", "Missing tags!",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("No jobs in queue! Please add something to queue!", "Empty queue", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -105,6 +98,7 @@ namespace SankakuDownloader
                 ToggleState(false);
 
                 ActiveViewModel.SaveData(SaveFileLocation);
+
                 await ActiveViewModel.StartDownloading();
             }
             catch (Exception ex)
@@ -193,7 +187,36 @@ namespace SankakuDownloader
         void OpenFolder(object sender, RoutedEventArgs e)
         {
             if (ActiveViewModel.IsPathSet() == false) return;
-            Process.Start(ActiveViewModel.DownloadLocation);
+            Process.Start(ActiveViewModel.CurrentJob.DownloadLocation);
+        }
+
+        private void BtnEnqueue_Click(object sender, RoutedEventArgs e)
+        {
+            // check download location
+            if (ActiveViewModel.IsPathSet() == false)
+            {
+                MessageBox.Show("Please set the download location!", "Missing download location!",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // check query
+            if (ActiveViewModel.CurrentJob.Query == null || ActiveViewModel.CurrentJob.Query?.Length == 0)
+            {
+                MessageBox.Show("Please specify some tags!", "Missing tags!",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // enqueue current search
+            ActiveViewModel.EnqueueCurrentJob();
+        }
+
+        private void BtnViewQueue_Click(object sender, RoutedEventArgs e)
+        {
+            // view the queue
+            var queue = new JobQueueWindow(this);
+            queue.Show();
         }
     }
 }

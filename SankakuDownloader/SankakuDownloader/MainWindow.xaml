@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SankakuDownloader"
         mc:Ignorable="d" DataContext="{StaticResource viewModel}"
-        Title="Sankaku Downloader" Height="600" MinWidth="600" MinHeight="450" Width="600" Closing="Window_Closing">
+        Title="Sankaku Downloader" Height="600" MinWidth="600" MinHeight="600" Width="600" Closing="Window_Closing">
     <Window.Resources>
         <Style TargetType="MenuItem" x:Key="fileMenuItem">
             <Style.Triggers>
@@ -26,7 +26,7 @@
             <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="262,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
             <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click" IsDefault="True"/>
         </Grid>
-        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,278,10,46" Grid.ColumnSpan="2">
+        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,338,10,80" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -58,25 +58,25 @@
             </ListView.ItemTemplate>
         </ListView>
         <TextBlock Text="Tags:" HorizontalAlignment="Left" Margin="10,59,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox x:Name="_tags" Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+        <TextBox x:Name="_tags" Text="{Binding CurrentJob.Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                  Height="23" Margin="10,80,10,0" TextWrapping="Wrap" VerticalAlignment="Top" TabIndex="1"/>
 
         <TextBlock Text="Blacklisted Tags:" HorizontalAlignment="Left" Margin="10,59,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
-        <TextBox x:Name="_blacklist" Text="{Binding Blacklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+        <TextBox x:Name="_blacklist" Text="{Binding CurrentJob.Blacklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                  Height="23" Margin="10,80,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" TabIndex="2"/>
 
         <TextBlock Text="How many posts to download?" HorizontalAlignment="Left" Margin="10,116,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox x:Name="_limitdownload" Text="{Binding MaxDownloadCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_limitdownload" Text="{Binding CurrentJob.MaxDownloadCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="10,137,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="174" TabIndex="3"/>
         <TextBlock Text="Leave 0 for NO LIMIT" HorizontalAlignment="Left" Margin="189,140,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FFCFCFCF"/>
 
         <TextBlock Text="Max. allowed file size (in MB):" HorizontalAlignment="Left" Margin="10,170,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox x:Name="_limitsize" Text="{Binding MaxFileSizeMB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_limitsize" Text="{Binding CurrentJob.MaxFileSizeMB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="10,191,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="174" TabIndex="4"/>
         <TextBlock Text="Leave 0 for NO LIMIT" HorizontalAlignment="Left" Margin="189,194,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FFCFCFCF"/>
 
         <TextBlock Text="Download location:" HorizontalAlignment="Left" Margin="10,226,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBlock x:Name="_location" Text="{Binding DownloadLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MouseDown="TextBlock_MouseDown" 
+        <TextBlock x:Name="_location" Text="{Binding CurrentJob.DownloadLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MouseDown="TextBlock_MouseDown" 
                    HorizontalAlignment="Left" Margin="10,242,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="#FF999999">
             <TextBlock.ContextMenu>
                 <ContextMenu>
@@ -86,27 +86,50 @@
         </TextBlock>
 
         <TextBlock Text="Starting page:" HorizontalAlignment="Left" Margin="10,157,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
-        <TextBox x:Name="_startingPage" Text="{Binding StartingPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_startingPage" Text="{Binding CurrentJob.StartingPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="10,178,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="7"/>
 
         <TextBlock Text="Posts per page:" HorizontalAlignment="Left" Margin="118,157,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
-        <TextBox x:Name="_limit" Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_limit" Text="{Binding CurrentJob.Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="118,178,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="8"/>
 
-        <CheckBox x:Name="_checkSkipExisting" Content="Skip existing files" IsChecked="{Binding SkipExistingFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="10,108,0,0" VerticalAlignment="Top" TabIndex="5"/>
-        <CheckBox x:Name="_checkSkipVideo" Content="Skip video files" IsChecked="{Binding SkipVideoFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" TabIndex="6"/>
+        <CheckBox x:Name="_checkSkipExisting" Content="Skip existing files" IsChecked="{Binding CurrentJob.SkipExistingFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="10,108,0,0" VerticalAlignment="Top" TabIndex="5"/>
+        <CheckBox x:Name="_checkSkipVideo" Content="Skip video files" IsChecked="{Binding CurrentJob.SkipVideoFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" TabIndex="6"/>
 
         <TextBlock Text="Min. score:" HorizontalAlignment="Left" Margin="10,207,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
-        <TextBox x:Name="_minscore" Text="{Binding MinScore, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_minscore" Text="{Binding CurrentJob.MinScore, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="10,228,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="9"/>
 
         <TextBlock Text="Min. fav. count:" HorizontalAlignment="Left" Margin="118,207,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
-        <TextBox x:Name="_minfavcount" Text="{Binding MinFavCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+        <TextBox x:Name="_minfavcount" Text="{Binding CurrentJob.MinFavCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
                  Height="23" Margin="118,228,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="88" Grid.Column="1" TabIndex="10"/>
         <Button x:Name="btnStart" Content="Start Downloading" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="133" Height="25" Click="btnStart_Click"/>
         <TextBlock x:Name="_loginStatus" HorizontalAlignment="Left" Margin="10,0,0,15" TextWrapping="Wrap" VerticalAlignment="Bottom" Text="{Binding LoginStatus}"/>
         <CheckBox Content="Concurrent Downloads" HorizontalAlignment="Right" Margin="0,0,162,15" x:Name="_checkboxConcurrent"
                   VerticalAlignment="Bottom" Grid.ColumnSpan="2" IsChecked="{Binding ConcurrentDownloads, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <CheckBox x:Name="_checkResizedOnly" Content="Resized Only" IsChecked="{Binding ResizedOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="133,108,-5,0" VerticalAlignment="Top" TabIndex="5"/>
+        <CheckBox x:Name="_checkResizedOnly" Content="Resized Only" IsChecked="{Binding CurrentJob.ResizedOnly, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" HorizontalAlignment="Left" Margin="133,108,-5,0" VerticalAlignment="Top" TabIndex="5"/>
+        <Button x:Name="btnEnqueue" Content="Add to Queue" Margin="0,0,10,50" VerticalAlignment="Bottom" Height="25" Click="BtnEnqueue_Click" Grid.Column="1" HorizontalAlignment="Right" Width="113"/>
+        <Button x:Name="btnViewQueue" Content="View Queue" HorizontalAlignment="Right" Margin="0,0,126,50" VerticalAlignment="Bottom" Width="113" Height="25" Click="BtnViewQueue_Click" Grid.Column="1"/>
+
+        <TextBlock Margin="10,272,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="316">
+            <Run Text="Naming format: " />
+            <Run Text="( md5, extension, score, favcount, genre-tags, artist-tags, copyright-tags, general-tags, character-tags )" Foreground="Gray" FontSize="10"/>
+        </TextBlock>
+        <TextBox x:Name="_namingFormat" Text="{Binding CurrentJob.NamingFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+            Height="22" Margin="10,304,0,0" TextWrapping="Wrap" VerticalAlignment="Top" TabIndex="4" HorizontalAlignment="Left" Width="304"/>
+
+        <TextBlock HorizontalAlignment="Left" Margin="10,0,0,59" TextWrapping="Wrap" VerticalAlignment="Bottom" >
+            <Run Text="Jobs in queue: " />
+            <Run Text="{Binding JobsRemaining, Mode=OneWay}" FontWeight="Bold" />
+        </TextBlock>
+
+        <!-- TODO: Implement this later - remove Visibility:Collapsed -->
+        <CheckBox x:Name="_checkPreviousDownloaded" Visibility="Collapsed" Content="Skip previously downloaded files" IsChecked="{Binding CurrentJob.SkipPreviousFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="10,266,10,0" VerticalAlignment="Top" TabIndex="6" Grid.Column="1"/>
+
+
+        <TextBlock Margin="319,304,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.ColumnSpan="2" Height="29" FontSize="10">
+            <Run Text="Example:"  />
+            <Run Text="{Binding CurrentJob.NamingExample,Mode=OneWay}" Foreground="#FF535353" />
+        </TextBlock>
     </Grid>
 </Window>
