@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json;
@@ -74,10 +75,19 @@ namespace SankakuAPI
         }
 
         public async Task<byte[]> DownloadImage(string url) => await client.GetByteArrayAsync(url);
-        public async Task DownloadImage(string url, string destinationFilename)
+        public async Task DownloadImage(string url, string destinationFilename, CancellationToken token)
         {
-            using (var fstr = new FileStream(destinationFilename, FileMode.Create, FileAccess.Write, FileShare.None))
-            using (var str = await client.GetStreamAsync(url)) await str.CopyToAsync(fstr);          
+            try
+            {
+                using (var fstr = new FileStream(destinationFilename, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var str = await client.GetStreamAsync(url).ConfigureAwait(false))
+                    await str.CopyToAsync(fstr, 81920, token).ConfigureAwait(false);
+            }            
+            catch
+            {
+                if (File.Exists(destinationFilename)) File.Delete(destinationFilename);
+                throw;
+            }
         }
 
         void InitializeClient()

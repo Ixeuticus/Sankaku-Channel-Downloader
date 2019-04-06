@@ -107,7 +107,7 @@ namespace SankakuDownloader
 
                                 // get pages
                                 Log($"Searching on page {currentPage} in chunks of {CurrentJob.Limit} posts per page.");
-                                var posts = await Client.Search(CurrentJob.Query.ToLower(), currentPage, CurrentJob.Limit);
+                                var posts = await Client.Search(CurrentJob.Query.ToLower(), currentPage, CurrentJob.Limit).ConfigureAwait(false);
                                 csrc.Token.ThrowIfCancellationRequested();
 
                                 Log($"Found {posts.Count} posts on page {currentPage}");
@@ -240,10 +240,8 @@ namespace SankakuDownloader
                                     bool useSample = CurrentJob.ResizedOnly == true && !string.IsNullOrEmpty(p.SampleUrl);
                                     var url = useSample ? p.SampleUrl : p.FileUrl;
 
-                                    var task = Client.DownloadImage(url, targetDestination);
-                                    task.Wait(csrc.Token);
+                                    await Client.DownloadImage(url, targetDestination, csrc.Token).ConfigureAwait(false);                                   
 
-                                    csrc.Token.ThrowIfCancellationRequested();
                                     if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
                                     #endregion
 
