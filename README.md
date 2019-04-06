@@ -6,6 +6,8 @@ It has now been overhauled and made from scratch with the new Sankaku Channel AP
 ## Features
 - Login to remove download limit
 - Search using multiple tags
+- **Job queue system** (Queue current search configuration and have multiple jobs queued)
+- Define your own **file naming format**
 - **Blacklist** multiple tags
 - Set **limit for max. downloaded posts**
 - Set **limit for max. file size**
@@ -32,6 +34,7 @@ Authentication is now **optional**. You no longer need to enter your username an
 
 ### Example of usage:
 ![](https://cryshana.me/viewer/nvrdegupgow.png?d=true)
+(Outdated image since v1.2 - not showing job queue)
 
 ## Note
 I made this "overhaul" entirely in one day so I haven't had the time to test everything yet. The API is also in beta, which means it can change at any time - breaking the app. I will try to keep it updated as long as it does not take too much of my time.
