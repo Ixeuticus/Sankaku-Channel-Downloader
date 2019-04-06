@@ -247,18 +247,19 @@ namespace SankakuDownloader
                                         FullPath = targetDestination,
                                         FileName = Path.GetFileName(targetDestination),
                                         IsError = false,
-                                        Message = $"Downloading '{fname}' [0.00%]"
+                                        Message = $"Downloading '{Path.GetFileName(targetDestination)}' " +
+                                                  $"({p.ActualFileSizeMB.ToString("0.00")} MB) [0.00%]"
                                     };
                                     Action<long> prg = l =>
                                     {
                                         var progress = ((double)l / p.FileSize) * 100;
-                                        log.Message = $"{getProgress(pr)} Downloading '{Path.GetFileName(targetDestination)}' " +
+                                        log.Message = $"Downloading '{Path.GetFileName(targetDestination)}' " +
                                                       $"({p.ActualFileSizeMB.ToString("0.00")} MB) [{progress.ToString("0.00")}%]";
                                     };
                                     Log(log);
 
                                     // DOWNLOAD IMAGE
-                                    await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);                                   
+                                    await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);
 
                                     if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
                                     #endregion
@@ -488,7 +489,7 @@ namespace SankakuDownloader
         }
 
         private void Log(LogItem item) => UIContext.Post(a => Logs.Add(item), null);
-        
+
         private void Log(string message, bool iserror = false, string filepath = null, bool minor = false)
         {
             var timestamp = $"[{DateTime.Now.ToString("HH:mm:ss")}]";
