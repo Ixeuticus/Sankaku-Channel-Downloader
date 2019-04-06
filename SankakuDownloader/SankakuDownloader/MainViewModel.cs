@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -117,9 +117,6 @@ namespace SankakuDownloader
                                 int downloaded = 0;
                                 int dprogress = 0;
 
-                                // local function for getting progress text
-                                string getProgress(int p) => $"[{((p / (double)posts.Count) * 100.0).ToString("0.00")}%]";
-
                                 // local function for getting first non-aggregate exception
                                 Exception ignoreAggregateExceptions(Exception exc)
                                 {
@@ -153,7 +150,7 @@ namespace SankakuDownloader
                                         {
                                             pr = ++dprogress;
                                             // limit reached
-                                            Log($"{getProgress(pr)} Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - File size limit exceeded",
+                                            Log($"Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - File size limit exceeded",
                                                     false, targetDestination, true);
                                         }
                                         return;
@@ -167,7 +164,7 @@ namespace SankakuDownloader
                                             {
                                                 pr = ++dprogress;
                                                 // if size difference is less than 400 bytes - consider images to be the same
-                                                Log($"{getProgress(pr)} Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - File exists",
+                                                Log($"Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - File exists",
                                                         false, targetDestination, true);
                                             }
                                             return;
@@ -196,7 +193,7 @@ namespace SankakuDownloader
                                                 {
                                                     pr = ++dprogress;
                                                     // post contains blacklisted tag
-                                                    Log($"{getProgress(pr)} Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'",
+                                                    Log($"Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Contains blacklisted tag '{b}'",
                                                             false, targetDestination, true);
                                                     isBlacklisted = true;
                                                 }
@@ -215,7 +212,7 @@ namespace SankakuDownloader
                                             {
                                                 pr = ++dprogress;
                                                 // is a video
-                                                Log($"{getProgress(pr)} Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Is video",
+                                                Log($"Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Is video",
                                                     false, targetDestination, true);
                                             }
                                             return;
@@ -227,7 +224,7 @@ namespace SankakuDownloader
                                         {
                                             pr = ++dprogress;
                                             // post is below score/favcount limit
-                                            Log($"{getProgress(pr)} Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Score or Fav. Count is below limit",
+                                            Log($"Skipped '{fname}' ({p.FileSizeMB.ToString("0.00")} MB) - Score or Fav. Count is below limit",
                                                     false, targetDestination, true);
                                         }
 
@@ -255,11 +252,21 @@ namespace SankakuDownloader
                                         var progress = ((double)l / p.FileSize) * 100;
                                         log.Message = $"Downloading '{Path.GetFileName(targetDestination)}' " +
                                                       $"({p.ActualFileSizeMB.ToString("0.00")} MB) [{progress.ToString("0.00")}%]";
+
                                     };
                                     Log(log);
 
-                                    // DOWNLOAD IMAGE
-                                    await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);
+                                    try
+                                    {
+                                        // DOWNLOAD IMAGE
+                                        await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);
+                                    }
+                                    catch
+                                    {
+                                        // remove log
+                                        UIContext.Send(d => Logs.Remove(log), null);
+                                        throw;
+                                    }
 
                                     if (oldcsrc != csrc) throw new OperationCanceledException("Token has changed!");
                                     #endregion
@@ -270,7 +277,7 @@ namespace SankakuDownloader
                                         pr = ++dprogress;
                                         downloaded++;
                                         p.ActualFileSize = new FileInfo(targetDestination).Length;
-                                        log.Message = $"{getProgress(pr)} Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)";
+                                        log.Message = $"Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)";
                                         /*
                                         Log($"{getProgress(pr)} Downloaded{(useSample ? " resized" : "")} '{fname}' ({p.ActualFileSizeMB.ToString("0.00")} MB)", 
                                             false, targetDestination);*/
