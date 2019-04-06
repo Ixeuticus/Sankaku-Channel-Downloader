@@ -129,12 +129,11 @@ namespace SankakuDownloader
                                 }
 
                                 // local function for downloading a post
-                                async Task downloadPost(SankakuPost p)
+                                async Task downloadPost(SankakuPost p, CancellationTokenSource taskTokenSource)
                                 {
                                     int pr = 0;
                                     CancellationTokenSource oldcsrc = csrc;
-
-                                    csrc.Token.ThrowIfCancellationRequested();
+                                    taskTokenSource.Token.ThrowIfCancellationRequested();
 
                                     // determine destination
                                     var fname = CurrentJob.GetFilename(p);
@@ -259,7 +258,7 @@ namespace SankakuDownloader
                                     try
                                     {
                                         // DOWNLOAD IMAGE
-                                        await Client.DownloadImage(url, targetDestination, prg, csrc.Token).ConfigureAwait(false);
+                                        await Client.DownloadImage(url, targetDestination, prg, taskTokenSource.Token).ConfigureAwait(false);
                                     }
                                     catch
                                     {
@@ -291,48 +290,48 @@ namespace SankakuDownloader
                                 if (ConcurrentDownloads == true)
                                 {
                                     // concurrent downloading
-                                    CancellationTokenSource parallelsrc = new CancellationTokenSource();
+                                    CancellationTokenSource parallelsrc = CancellationTokenSource.CreateLinkedTokenSource(csrc.Token);
                                     Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, (p, state) =>
+                                    {
+                                        try
                                         {
-                                            try
+                                            // only start downloading if parallelsrc is not cancelled
+                                            if (parallelsrc.IsCancellationRequested == false)
+                                                downloadPost(p, parallelsrc).Wait(parallelsrc.Token);
+                                        }
+                                        catch (AggregateException aex)
+                                        {
+                                            lock (padlockp)
                                             {
-                                                // only start downloading if parallelsrc is not cancelled
-                                                if (parallelsrc.IsCancellationRequested == false)
-                                                    downloadPost(p).Wait(parallelsrc.Token);
-                                            }
-                                            catch (AggregateException aex)
-                                            {
-                                                lock (padlockp)
-                                                {
-                                                    e = ignoreAggregateExceptions(aex);
+                                                e = ignoreAggregateExceptions(aex);
 
-                                                    // task sometimes gets cancelled without ever requesting cancellation
-                                                    if (e is TaskCanceledException) e = new HttpRequestException("Lost connection [0].");
-                                                }
-                                                parallelsrc.Cancel();
+                                                // task sometimes gets cancelled without ever requesting cancellation
+                                                if (e is TaskCanceledException) e = new HttpRequestException("Lost connection [0].");
                                             }
-                                            catch (Exception ex)
+                                            parallelsrc.Cancel();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            lock (padlockp)
                                             {
-                                                lock (padlockp)
-                                                {
-                                                    // cancel entire task if csrc is cancelled
-                                                    if (csrc.IsCancellationRequested) e = ex;
-                                                    // cancel only this loop if parallelsrc is cancelled
-                                                    else if (parallelsrc.IsCancellationRequested) e = new HttpRequestException("Lost connection [1].");
-                                                    // unknown error
-                                                    else e = ex;
-                                                }
-
-                                                if (parallelsrc.IsCancellationRequested == false) parallelsrc.Cancel();
+                                                // cancel entire task if csrc is cancelled
+                                                if (csrc.IsCancellationRequested) e = ex;
+                                                // cancel only this loop if parallelsrc is cancelled
+                                                else if (parallelsrc.IsCancellationRequested) e = new HttpRequestException("Lost connection [1].");
+                                                // unknown error
+                                                else e = ex;
                                             }
-                                        });
+
+                                            if (parallelsrc.IsCancellationRequested == false) parallelsrc.Cancel();
+                                        }
+                                    });
 
                                     if (e != null) throw e;
                                 }
                                 else foreach (var p in posts)
                                     {
                                         // sequential downloading
-                                        try { await downloadPost(p); }
+                                        try { await downloadPost(p, csrc); }
                                         catch (AggregateException aex)
                                         {
                                             e = ignoreAggregateExceptions(aex);
@@ -770,5 +769,6 @@ namespace SankakuDownloader
 
     #region Exceptions
     public class LimitReachedException : Exception { }
+    public class SubtaskCanceledException : Exception { }
     #endregion
 }
