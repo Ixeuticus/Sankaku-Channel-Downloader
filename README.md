@@ -33,11 +33,7 @@ Authentication is now **optional**. You no longer need to enter your username an
 
 
 ### Example of usage:
-New screenshot from v1.2.4:
 ![](https://cryshana.me/viewer/w25f52afdhz.png?d=true)
-
-Old screenshot from v1.1:
-![](https://cryshana.me/viewer/nvrdegupgow.png?d=true)
 
 
 ## Note
