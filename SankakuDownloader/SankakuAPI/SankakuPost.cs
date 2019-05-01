@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace SankakuAPI
 {
     public class SankakuPost
     {
+        [JsonProperty("id")]
+        public long Id { get; set; }
+
         [JsonProperty("width")]
         public int Width { get; set; }
         [JsonProperty("height")]

@@ -112,7 +112,7 @@
 
         <TextBlock Margin="10,272,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="316">
             <Run Text="Naming format: " />
-            <Run Text="( md5, extension, score, favcount, genre-tags, artist-tags, copyright-tags, general-tags, character-tags )" Foreground="Gray" FontSize="10"/>
+            <Run Text="( id, md5, extension, score, favcount, genre-tags, artist-tags, copyright-tags, general-tags, character-tags )" Foreground="Gray" FontSize="10"/>
         </TextBlock>
         <TextBox x:Name="_namingFormat" Text="{Binding CurrentJob.NamingFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
             Height="22" Margin="10,304,0,0" TextWrapping="Wrap" VerticalAlignment="Top" TabIndex="4" HorizontalAlignment="Left" Width="304"/>

@@ -598,6 +598,7 @@ namespace SankakuDownloader
         }
         public string NamingExample => GetFilename(new SankakuPost()
         {
+            Id = 566654,
             Score = 233,
             FavCount = 13444,
             FileUrl = "//cs.sankakucomplex.com/data/c1/f1/c1f1bf167b1c24dad6475bfdf98fa3fd.png",
@@ -664,6 +665,7 @@ namespace SankakuDownloader
 
             // get length of filename WITHOUT replaced values
             var emptyFormat = NamingFormat
+                .Replace("[id]", "")
                 .Replace("[md5]", "")
                 .Replace("[score]", "")
                 .Replace("[favcount]", "")
@@ -716,6 +718,7 @@ namespace SankakuDownloader
             // construct filename and keep it's length within [maxFilenameLength]
             Dictionary<string, string> values = new Dictionary<string, string>
             {
+                { "id", p.Id.ToString() },
                 { "md5", md5 },
                 { "extension", ext },
                 { "score", score },
