@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SankakuDownloader"
         mc:Ignorable="d" DataContext="{StaticResource viewModel}"
-        Title="Sankaku Downloader" Height="600" MinWidth="600" MinHeight="600" Width="600" Closing="Window_Closing">
+        Title="Sankaku Downloader" Height="645" MinWidth="600" MinHeight="640" Width="600" Closing="Window_Closing">
     <Window.Resources>
         <Style TargetType="MenuItem" x:Key="fileMenuItem">
             <Style.Triggers>
@@ -26,7 +26,7 @@
             <PasswordBox x:Name="_password" HorizontalAlignment="Left" Margin="262,13,0,0" VerticalAlignment="Top" Width="144" Height="23"/>
             <Button x:Name="btnLogin" Content="Login" Margin="418,11,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="80" Click="btnLogin_Click" IsDefault="True"/>
         </Grid>
-        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,338,10,85" Grid.ColumnSpan="2">
+        <ListView x:Name="_list" ItemsSource="{Binding Logs}" Margin="10,369,10,85" Grid.ColumnSpan="2">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" VirtualizingPanel.VirtualizationMode="Standard">
@@ -126,7 +126,7 @@
         <CheckBox x:Name="_checkPreviousDownloaded" Visibility="Collapsed" Content="Skip previously downloaded files" IsChecked="{Binding CurrentJob.SkipPreviousFiles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="10,266,10,0" VerticalAlignment="Top" TabIndex="6" Grid.Column="1"/>
 
 
-        <TextBlock Margin="319,304,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.ColumnSpan="2" Height="29" FontSize="10">
+        <TextBlock Margin="10,326,20,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="38" FontSize="10">
             <Run Text="Example:"  />
             <Run Text="{Binding CurrentJob.NamingExample,Mode=OneWay}" Foreground="#FF535353" />
         </TextBlock>
@@ -138,5 +138,12 @@
             <Slider x:Name="_concurrencySlider" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="158" AutoToolTipPlacement="BottomRight" 
                 Minimum="2" Maximum="5" Value="{Binding Concurrency}" Canvas.Left="10" Canvas.Top="26"/>
         </Canvas>
+        <TextBlock Text="Max. retries (post):" HorizontalAlignment="Left" Margin="10,282,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
+        <TextBox x:Name="_maxretries" Text="{Binding CurrentJob.MaxRetries, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+            Height="24" Margin="10,302,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="110" Grid.Column="1" TabIndex="9"/>
+        <TextBlock Text="Fail add time:" HorizontalAlignment="Left" Margin="133,282,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
+        <TextBox x:Name="_waitTimeSec" Text="{Binding CurrentJob.WaitTimeSec, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" GotFocus="GotFocus"
+            Height="24" Margin="133,302,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="73" Grid.Column="1" TabIndex="9"/>
+        <TextBlock Text="sec" HorizontalAlignment="Left" Margin="211,305,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Foreground="#FFAEAEAE" Width="20"/>
     </Grid>
 </Window>

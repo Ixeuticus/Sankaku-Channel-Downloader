@@ -73,6 +73,8 @@ namespace SankakuDownloader
             _namingFormat.IsEnabled = state;
             btnEnqueue.IsEnabled = state;
             btnLogin.IsEnabled = state;
+            _maxretries.IsEnabled = state;
+            _waitTimeSec.IsEnabled = state;
         }
 
         async void btnStart_Click(object sender, RoutedEventArgs e)
@@ -86,11 +88,7 @@ namespace SankakuDownloader
             }
 
             // check if queue has jobs
-            if (ActiveViewModel.Jobs.Count == 0)
-            {
-                MessageBox.Show("No jobs in queue! Please add something to queue!", "Empty queue", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            if (ActiveViewModel.Jobs.Count == 0 && EnqueueJob() == false) return;         
 
             // start downloading
             try
@@ -191,14 +189,16 @@ namespace SankakuDownloader
             Process.Start(ActiveViewModel.CurrentJob.DownloadLocation);
         }
 
-        private void BtnEnqueue_Click(object sender, RoutedEventArgs e)
+        private void BtnEnqueue_Click(object sender, RoutedEventArgs e) => EnqueueJob();
+
+        private bool EnqueueJob()
         {
             // check download location
             if (ActiveViewModel.IsPathSet() == false)
             {
                 MessageBox.Show("Please set the download location!", "Missing download location!",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                return false;
             }
 
             // check query
@@ -206,11 +206,12 @@ namespace SankakuDownloader
             {
                 MessageBox.Show("Please specify some tags!", "Missing tags!",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                return false;
             }
 
             // enqueue current search
             ActiveViewModel.EnqueueCurrentJob();
+            return true;
         }
 
         private void BtnViewQueue_Click(object sender, RoutedEventArgs e)

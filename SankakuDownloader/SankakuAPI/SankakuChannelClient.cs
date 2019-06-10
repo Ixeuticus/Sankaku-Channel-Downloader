@@ -55,13 +55,13 @@ namespace SankakuAPI
             if (authresponse.Success == false) throw new LoginException(content);
             return authresponse.Success;
         }
-        public async Task<List<SankakuPost>> Search(string query, int page = 1, int limit = 30)
+        public async Task<List<SankakuPost>> Search(string query, int page, int limit, CancellationToken token)
         {
             if (page < 1) throw new NotSupportedException("Page count starts at 1");
             if (limit < 1) throw new NotSupportedException("Limit size must be at least 1");
 
             var tgs = HttpUtility.UrlEncode(query);
-            var response = await client.GetAsync($"/post/index.json?limit={limit}&page={page}&tags={tgs}{Credentials}");
+            var response = await client.GetAsync($"/post/index.json?limit={limit}&page={page}&tags={tgs}{Credentials}", token);
 
             var content = await response.Content.ReadAsStringAsync();
             if (content.ToLower().Contains("anonymous users can only view")) throw new UnauthorizedAccessException("Sign in to view more pages!");

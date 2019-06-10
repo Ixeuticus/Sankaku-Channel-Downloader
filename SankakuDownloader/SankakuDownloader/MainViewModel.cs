@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -97,9 +98,12 @@ namespace SankakuDownloader
                         int downloadCount = 0;
                         int currentPage = CurrentJob.StartingPage;
 
+                        // tracks number of failed times to get certain post
+                        var postErrorLog = new ConcurrentDictionary<long, int>();
+
                         // variables for retrying when connection fails
                         int waitingTime = 0;
-                        int waitingTimeIncrement = 2000;
+                        int waitingTimeIncrement = (int)(CurrentJob.WaitTimeSec * 1000);
                         int waitingTimeLimit = 60 * 60 * 1000;
 
                         while (true)
@@ -110,7 +114,7 @@ namespace SankakuDownloader
 
                                 // get pages
                                 Log($"Searching on page {currentPage} in chunks of {CurrentJob.Limit} posts per page.");
-                                var posts = await Client.Search(CurrentJob.Query.ToLower(), currentPage, CurrentJob.Limit).ConfigureAwait(false);
+                                var posts = await Client.Search(CurrentJob.Query.ToLower(), currentPage, CurrentJob.Limit, csrc.Token).ConfigureAwait(false);
                                 csrc.Token.ThrowIfCancellationRequested();
 
                                 Log($"Found {posts.Count} posts on page {currentPage}");
@@ -296,14 +300,23 @@ namespace SankakuDownloader
                                     CancellationTokenSource parallelsrc = CancellationTokenSource.CreateLinkedTokenSource(csrc.Token);
                                     Parallel.ForEach(posts, new ParallelOptions() { MaxDegreeOfParallelism = Concurrency }, (p, state) =>
                                     {
+                                        if (postErrorLog.ContainsKey(p.Id) && postErrorLog[p.Id] > CurrentJob.MaxRetries)
+                                        {
+                                            Log($"Skipping '{p.Id}' for reaching max. number of retries!");
+                                            return;
+                                        }
+
                                         try
                                         {
                                             // only start downloading if parallelsrc is not cancelled
-                                            if (parallelsrc.IsCancellationRequested == false)
-                                                downloadPost(p, parallelsrc).Wait(parallelsrc.Token);
+                                            if (parallelsrc.IsCancellationRequested == false) downloadPost(p, parallelsrc).Wait(parallelsrc.Token);
                                         }
+                                        catch (OperationCanceledException) { }
                                         catch (AggregateException aex)
                                         {
+                                            // add to problematic Ids
+                                            postErrorLog.AddOrUpdate(p.Id, 1, (key, old) => old + 1);
+
                                             lock (padlockp)
                                             {
                                                 e = ignoreAggregateExceptions(aex);
@@ -315,6 +328,9 @@ namespace SankakuDownloader
                                         }
                                         catch (Exception ex)
                                         {
+                                            // add to problematic Ids
+                                            postErrorLog.AddOrUpdate(p.Id, 1, (key, old) => old + 1);
+
                                             lock (padlockp)
                                             {
                                                 // cancel entire task if csrc is cancelled
@@ -333,30 +349,43 @@ namespace SankakuDownloader
                                 }
                                 else foreach (var p in posts)
                                     {
+                                        if (postErrorLog.ContainsKey(p.Id) && postErrorLog[p.Id] > CurrentJob.MaxRetries)
+                                        {
+                                            Log($"Skipping '{p.Id}' for reaching max. number of retries!");
+                                            continue;
+                                        }
+
                                         // sequential downloading
                                         try { await downloadPost(p, csrc); }
+                                        catch (OperationCanceledException) { }
                                         catch (AggregateException aex)
                                         {
+                                            postErrorLog.AddOrUpdate(p.Id, 1, (key, old) => old + 1);
+
                                             e = ignoreAggregateExceptions(aex);
 
                                             // task sometimes gets cancelled without ever requesting cancellation
                                             if (e is TaskCanceledException && csrc.IsCancellationRequested == false)
-                                                throw new HttpRequestException("Lost connection [0].");
+                                                throw new HttpRequestException("Lost connection [2].");
 
                                             throw e;
                                         }
                                         catch (Exception ex)
                                         {
+                                            postErrorLog.AddOrUpdate(p.Id, 1, (key, old) => old + 1);
+
                                             // task sometimes gets cancelled without ever requesting cancellation
                                             if (ex is TaskCanceledException && csrc.IsCancellationRequested == false)
-                                                throw new HttpRequestException("Lost connection [0].");
+                                                throw new HttpRequestException("Lost connection [3].");
 
                                             throw;
                                         }
                                     }
 
                                 currentPage++;
+
                                 waitingTime = 0;
+                                postErrorLog.Clear();
                                 downloadCount += posts.Count;
                             }
                             catch (HttpRequestException ex)
@@ -372,11 +401,11 @@ namespace SankakuDownloader
                                 if (waitingTime <= waitingTimeLimit) waitingTime += waitingTimeIncrement;
 
                                 // log
-                                Log("Error! " + ex.Message + $" Trying again in {getTime()}", true);
+                                Log("Error! " + ex.Message + $" ({ex.InnerException?.Message ?? ""})." + $" Trying again in {getTime()}", true);
                                 Logger.Log(ex, $"HttpError - Trying again in {getTime()} -> ");
-
+                                
                                 // wait
-                                await Task.Delay(waitingTime, csrc.Token);
+                                await Task.Delay(waitingTime, csrc.Token);                           
                             }
                             catch (OperationCanceledException)
                             {
@@ -445,7 +474,7 @@ namespace SankakuDownloader
                 save.Username = Client.Username;
                 save.PasswordHash = Client.PasswordHash;
                 save.ConcurrentDownloads = ConcurrentDownloads == true;
-                save.Concurrency = Concurrency;
+                save.Concurrency = Concurrency < 2 ? 2 : Concurrency;
 
                 serializer.Serialize(writer, save);
             }
@@ -462,13 +491,16 @@ namespace SankakuDownloader
                 if (CurrentJob == null) CurrentJob = new JobConfiguration();
 
                 Username = save.Username;
-                PasswordHash = save.PasswordHash;
                 CurrentJob.Query = save.Query;
                 CurrentJob.Limit = save.Limit;
                 Concurrency = save.Concurrency;
+                PasswordHash = save.PasswordHash;
                 ConcurrentDownloads = save.ConcurrentDownloads;
+
                 CurrentJob.MinScore = save.MinScore;
                 CurrentJob.Blacklist = save.Blacklist;
+                CurrentJob.MaxRetries = save.MaxRetries;
+                CurrentJob.WaitTimeSec = save.WaitTimeSec;
                 CurrentJob.ResizedOnly = save.ResizedOnly;
                 CurrentJob.MinFavCount = save.MinFavCount;
                 CurrentJob.NamingFormat = save.NamingFormat;
@@ -486,6 +518,10 @@ namespace SankakuDownloader
                     LoginStatus = $"Logged in as {Username} (Loaded from settings)";
                 }
                 else LoginStatus = "User is not logged in!";
+
+                if (CurrentJob.MaxRetries < 0) CurrentJob.MaxRetries = 30;
+                if (CurrentJob.WaitTimeSec <= 0) CurrentJob.WaitTimeSec = 2;
+                if (Concurrency < 2) Concurrency = 2;
             }
         }
         public void EnqueueCurrentJob()
@@ -545,6 +581,9 @@ namespace SankakuDownloader
         public int MinFavCount { get; set; }
         public string NamingFormat { get; set; }
         public bool SkipPreviousFiles { get; set; }
+        public int MaxRetries { get; set; }
+        public double WaitTimeSec { get; set; }
+
         public int Concurrency { get; set; }
     }
 
@@ -571,7 +610,8 @@ namespace SankakuDownloader
     public class JobConfiguration : INotifyPropertyChanged
     {
         string query, blacklist, location, namingFormat = null;
-        int spage = 1, limit = 50, maxdcount = 0, maxfs = 0, minsc = 0, minfc = 0;
+        int spage = 1, limit = 50, maxdcount = 0, maxfs = 0, minsc = 0, minfc = 0, maxrt = 5;
+        double waitTimeSec = 2;
         bool? skipvid, skipef = true, resizeonly = false, skiprev = false;
         bool isactive = false;
 
@@ -591,6 +631,8 @@ namespace SankakuDownloader
         public string DownloadLocation { get => location ?? "Click here to set it!"; set { location = value; Changed(); } }
         public int MinScore { get => minsc; set { minsc = value; Changed(); } }
         public int MinFavCount { get => minfc; set { minfc = value; Changed(); } }
+        public int MaxRetries { get => maxrt; set { maxrt = value; Changed(); } }
+        public double WaitTimeSec { get => waitTimeSec; set { waitTimeSec = value; Changed(); } }
         public string NamingFormat
         {
             get => string.IsNullOrEmpty(namingFormat) ? "[md5].[extension]" : namingFormat;
@@ -656,7 +698,9 @@ namespace SankakuDownloader
                 ResizedOnly = resizeonly == true,
                 StartingPage = spage,
                 NamingFormat = namingFormat,
-                SkipPreviousFiles = skiprev == true
+                SkipPreviousFiles = skiprev == true,
+                MaxRetries = maxrt >= 0 ? maxrt : 5,
+                WaitTimeSec = waitTimeSec > 0 ? waitTimeSec : 2.0
             };
         }
         public string GetFilename(SankakuPost p)
@@ -774,6 +818,8 @@ namespace SankakuDownloader
             skipef = j.skipef;
             resizeonly = j.resizeonly;
             skiprev = j.skiprev;
+            maxrt = j.maxrt;
+            waitTimeSec = j.waitTimeSec;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
