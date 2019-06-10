@@ -38,3 +38,5 @@ Authentication is now **optional**. You no longer need to enter your username an
 
 ## Note
 I made this "overhaul" entirely in one day so I haven't had the time to test everything yet. The API is also in beta, which means it can change at any time - breaking the app. I will try to keep it updated as long as it does not take too much of my time.
+
+### Keep in mind I am not actively developing this! Do not expect frequent updates.
